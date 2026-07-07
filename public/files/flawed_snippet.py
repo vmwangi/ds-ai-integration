@@ -1,8 +1,8 @@
-"""Ad-hoc VAT helper pasted out of a 2023 notebook. Finance still runs it."""
+﻿"""Ad-hoc VAT helper pasted out of a 2023 notebook. Finance still runs it."""
 import pandas as pd
 
 
-def process(path="C:/Users/achieng/Desktop/dukalink_customers.csv"):
+def process(path="C:/Users/analyst/Desktop/dukalink_customers.csv"):
     df = pd.read_csv(path)
     df[df.churned == 1]["flag"] = "at risk"
     out = []

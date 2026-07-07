@@ -36,15 +36,15 @@ const fmt = (s) =>
 const RES = (p) => `files/${p}`;
 const FileChip = ({ name, path }) => (
   <a href={RES(path || name)} download target="_blank" rel="noreferrer"
-    className="inline-flex items-center gap-1.5 text-xs font-mono font-semibold px-2.5 py-1 rounded-lg border border-teal-200 bg-white text-teal-800 hover:bg-teal-50 transition-colors">
+    className="hover-lift inline-flex items-center gap-1.5 text-xs font-mono font-semibold px-2.5 py-1 rounded-lg border border-teal-200 bg-white text-teal-800 hover:bg-teal-50 transition-colors">
     <span aria-hidden>{"\u2193"}</span>{name}
   </a>
 );
 
 /* ---------------- persona and prop illustrations (inline SVG) ---------------- */
-function AchiengBust({ size = 72 }) {
+function PersonaBust({ size = 72 }) {
   return (
-    <svg width={size} height={size} viewBox="0 0 120 120" aria-label="Achieng" role="img">
+    <svg width={size} height={size} viewBox="0 0 120 120" aria-label="Your data scientist persona" role="img">
       <circle cx="60" cy="118" r="46" fill="#0F766E" />
       <circle cx="60" cy="24" r="11" fill={HAIR} />
       <circle cx="60" cy="12" r="4" fill={CORAL} />
@@ -105,9 +105,24 @@ const CelebrateProps = () => (
   </svg>
 );
 
+/* Full-screen celebratory burst; pieces fall then the layer unmounts (see index.css). */
+const CONFETTI_COLORS = ["#0F766E", CORAL, "#9CD6CC", "#F0B43C"];
+const Confetti = () => (
+  <div className="confetti" aria-hidden>
+    {Array.from({ length: 28 }, (_, i) => (
+      <span key={i} style={{
+        left: `${(i * 37) % 100}%`, background: CONFETTI_COLORS[i % 4],
+        width: 6 + (i % 3) * 3, height: 6 + (i % 3) * 3,
+        borderRadius: i % 2 ? "50%" : "2px",
+        animationDelay: `${(i % 7) * 0.06}s`, animationDuration: `${0.9 + (i % 5) * 0.18}s`,
+      }} />
+    ))}
+  </div>
+);
+
 const SceneCard = ({ prop, children }) => (
   <div className="flex items-center gap-5 rounded-2xl p-5 my-4 flex-wrap" style={{ background: MINT }}>
-    <AchiengBust size={84} />
+    <PersonaBust size={84} />
     <div className="shrink-0">{prop}</div>
     <p className="text-sm text-slate-700 italic flex-1 min-w-[200px]">{children}</p>
   </div>
@@ -201,7 +216,7 @@ const TASKS = {
       use: "Onboarding, recurring reports, any project where more than one person or one AI touches the data.",
       who: "Data scientists and analysts making daily cleaning calls, analytics engineers on shared datasets, team leads standardizing juniors' calls.",
     },
-    story: "Before touching the churn data, Achieng writes DukaLink's cleaning rules into a Gem so every later step, including the pipeline the agent builds in Milestone 3, obeys the same playbook. Then she tests it the way she would test any system: by trying to break it.",
+    story: "Before touching the churn data, you write DukaLink's cleaning rules into a Gem so every later step, including the pipeline the agent builds in Milestone 3, obeys the same playbook. Then you test it the way you would test any system: by trying to break it.",
     steps: [
       ["Open `gemini.google.com`, choose Gems, then New Gem, and name it `DukaLink Cleaning Playbook`.", "one home for the team's rules."],
       ["Type the role: `You are a data cleaning advisor for the DukaLink analytics team.`", "a specific role keeps answers on scope."],
@@ -227,7 +242,7 @@ const TASKS = {
       use: "Pre-reviewing your own AI-generated code before committing; standardizing style without nagging.",
       who: "ML and analytics engineers shipping AI-assisted code, tech leads, any analyst committing to a shared repo.",
     },
-    story: "Achieng builds the reviewer that will audit everything produced later in the sprint, including the code the agent writes in Milestone 3: AI reviewing AI, with a human deciding. Its first test case is a small horror she keeps for exactly this purpose.",
+    story: "You build the reviewer that will audit everything produced later in the sprint, including the code the agent writes in Milestone 3: AI reviewing AI, with a human deciding. Its first test case is a small horror kept for exactly this purpose.",
     steps: [
       ["Create a new Gem named `DukaLink Code Reviewer` with the role: `You are a code reviewer enforcing the DukaLink analytics team conventions.`", "scope it to your team, not the internet."],
       ["List five or more conventions: docstrings with parameter types, no `iterrows` in production, no chained pandas assignment, explicit `dtype` handling on reads, no hard-coded paths.", "the Gem only enforces what you write down."],
@@ -252,7 +267,7 @@ const TASKS = {
       use: "The first hour with any dataset containing customer, employee, or financial information.",
       who: "Data scientists and analysts on customer data, and anyone in fintech, health, or telco with a DPO one desk away.",
     },
-    story: "The phone_number and national_id columns settle it: nothing gets prompted until the working copy is pseudonymized, and Achieng is precise about the word, because hashed data is still personal data. She runs the starter notebook, adapts the workplace prompt shipped in the files, and ends by recording the cleaning decisions her Milestone 3 pipeline will need.",
+    story: "The phone_number and national_id columns settle it: nothing gets prompted until the working copy is pseudonymized, and you are precise about the word, because hashed data is still personal data. You run the starter notebook, adapt the workplace prompt shipped in the files, and end by recording the cleaning decisions your Milestone 3 pipeline will need.",
     steps: [
       ["Upload the two CSVs to Colab, open `colab_starter.ipynb`, and run its cell: it drops `national_id`, hashes `phone_number`, and prints `df.info()` and `df.describe(include=\"all\")`.", "pseudonymize first; hashing keeps IDs matchable against payment logs without staying readable."],
       ["Add a markdown rule cell at the top: `Prompts may contain schema, dtypes, aggregate stats, and synthetic examples. Prompts may never contain raw rows with PII. Hashed columns are pseudonymized, not anonymous, and stay in scope.`", "a visible rule outlives good intentions."],
@@ -276,7 +291,7 @@ const TASKS = {
       use: "Model reviews, stakeholder writeups, any moment someone asks what is driving the result.",
       who: "Data scientists presenting models, ML engineers monitoring them, product and BI analysts translating for decision makers.",
     },
-    story: "The notebook is provided, so the effort goes where the concept lives: interpretation. Gemini correctly flags that with 80 percent retained, 83 percent accuracy barely beats predicting nobody churns, while the matrix shows two of every three churners missed. Then it overstates one SHAP effect, and she catches it in the magnitudes.",
+    story: "The notebook is provided, so the effort goes where the concept lives: interpretation. Gemini correctly flags that with 80 percent retained, 83 percent accuracy barely beats predicting nobody churns, while the matrix shows two of every three churners missed. Then it overstates one SHAP effect, and you catch it in the magnitudes.",
     steps: [
       ["Open `baseline_model.ipynb`, run both cells as they are, and keep the three outputs visible: class balance, confusion matrix with report, SHAP summary.", "your work is interpretation, not modeling."],
       ["Paste the outputs into Gemini and ask for two things: `a business-language interpretation` and `a list of ways this result could mislead`.", "asking how it misleads pushes past flattery."],
@@ -300,7 +315,7 @@ const TASKS = {
       use: "Monthly refreshes, feature pipelines, migration scripts.",
       who: "Data and analytics engineers owning pipelines, ML engineers productionizing features, data scientists done babysitting notebooks.",
     },
-    story: "The early discipline pays off: the spec quotes the Playbook Gem verbatim plus the Task 3 decisions. Achieng adjusts one step of the plan, watches a real traceback get fixed, reviews every diff, then asks for a README that flags any drift from the playbook. It finds one.",
+    story: "The early discipline pays off: the spec quotes the Playbook Gem verbatim plus the Task 3 decisions. You adjust one step of the plan, watch a real traceback get fixed, review every diff, then ask for a README that flags any drift from the playbook. It finds one.",
     steps: [
       ["Open the workshop folder in VS Code and start Claude Code, or run `gemini` in the folder if you are on the free Gemini CLI.", "give the agent the real project."],
       ["Adapt `prompts/etl_spec_prompt.txt` (shown in full below): paste both schemas, replace the cleaning rules with the verbatim text from your own Playbook Gem plus your Task 3 decisions.", "a workplace spec names inputs, rules, failure behaviour, non-goals, and done."],
@@ -325,7 +340,7 @@ const TASKS = {
       use: "Refreshes that grew to hours; code inherited from someone who left.",
       who: "Data engineers with slow refreshes, ML engineers with heavy pipelines, anyone who inherited a mystery script.",
     },
-    story: "slow_pipeline.py takes about 100 seconds on 76,503 orders, and Achieng is sure the repeated CSV read is the culprit. The profile proves her wrong: nearly all the runtime sits in one nested iterrows rescan. The rewrite finishes in well under a second, a few hundred times faster, and the Code Review Gem gets the final word.",
+    story: "slow_pipeline.py takes about 100 seconds on 76,503 orders, and you are sure the repeated CSV read is the culprit. The profile proves you wrong: nearly all the runtime sits in one nested iterrows rescan. The rewrite finishes in well under a second, a few hundred times faster, and the Code Review Gem gets the final word.",
     steps: [
       ["Run `python slow_pipeline.py` once, note the wall time, and write down your bottleneck guess.", "your guess is about to be tested."],
       ["Ask the agent: `Profile slow_pipeline.py and report the top three time sinks before changing anything.`", "measure before touching anything."],
@@ -335,7 +350,7 @@ const TASKS = {
     ],
     stretch: "Race the machine: write your own optimized version first, verify both against the original, compare timings. Then port the winner to polars and prove equivalence across libraries, not just versions.",
     mcqs: [
-      { q: "Why must profiling come before optimization?", opts: ["pandas requires it", "It warms the cache", "Intuition about hotspots is unreliable; effort goes where time actually is", "Profilers suggest the fixes"], a: 2, ex: "Achieng's wrong guess about the CSV read is the proof: optimize where the time actually goes." },
+      { q: "Why must profiling come before optimization?", opts: ["pandas requires it", "It warms the cache", "Intuition about hotspots is unreliable; effort goes where time actually is", "Profilers suggest the fixes"], a: 2, ex: "Your wrong guess about the CSV read is the proof: optimize where the time actually goes." },
       { q: "The rewrite runs a few hundred times faster. Before celebrating:", opts: ["Commit before the timing changes", "Confirm its output is identical to the original's", "Ask for 1,000 times faster", "Delete the slow version"], a: 1, ex: "A faster pipeline with different output is a silent failure; equivalence comes before celebration." },
     ],
     game: "bet", gameName: "Bet on the Bottleneck", files: ["slow_pipeline.py", "dukalink_orders.csv"],
@@ -345,7 +360,7 @@ const TASKS = {
 /* ---------------- checkpoint data ---------------- */
 const SNIPPET = [
   { t: "import pandas as pd", v: false },
-  { t: 'def process(path="C:/Users/achieng/Desktop/dukalink_customers.csv"):', v: true, why: "Hard-coded absolute path (and no docstring)" },
+  { t: 'def process(path="C:/Users/analyst/Desktop/dukalink_customers.csv"):', v: true, why: "Hard-coded absolute path (and no docstring)" },
   { t: "    df = pd.read_csv(path)", v: true, why: "No explicit dtype handling on read" },
   { t: '    df[df.churned == 1]["flag"] = "at risk"', v: true, why: "Chained assignment; the write is lost" },
   { t: "    out = []", v: false },
@@ -397,7 +412,7 @@ const PAGES = [
   { id: "welcome", label: "The brief lands", m: 0, type: "welcome" },
   { id: "outcomes", label: "Outcomes and agenda", m: 0, type: "outcomes" },
   { id: "setup", label: "Before the event", m: 0, type: "setup" },
-  { id: "story", label: "Meet Achieng", m: 0, type: "story" },
+  { id: "story", label: "Your mission", m: 0, type: "story" },
   { id: "m1", label: "Set the standards", m: 1, type: "milestone" },
   { id: "t1", label: "Task 1: Playbook Gem", m: 1, type: "task" },
   { id: "t1k", label: "Knowledge check", m: 1, type: "kcheck", task: "t1", sub: true },
@@ -781,7 +796,7 @@ const pctLabel = (p) => `${Math.round(p * 100)}%`;
 
 function StatTile({ label, value, sub }) {
   return (
-    <div className="rounded-xl border border-teal-100 bg-white p-4 flex-1 min-w-[140px]">
+    <div className="hover-lift rounded-xl border border-teal-100 bg-white p-4 flex-1 min-w-[140px]">
       <div className="text-xs text-slate-500">{label}</div>
       <div className="text-3xl font-semibold text-slate-800 mt-1">{value}</div>
       <div className="text-xs text-slate-500 mt-1">{sub}</div>
@@ -873,7 +888,7 @@ function ReportPage({ state, pct }) {
   return (
     <div>
       <div className="flex items-center gap-3 mb-1">
-        <AchiengBust size={48} />
+        <PersonaBust size={48} />
         <div>
           <Eyebrow>Sprint performance report | {today}</Eyebrow>
           <h2 className="text-2xl font-bold text-slate-800 tracking-tight">{student.name || "Your"} performance report</h2>
@@ -956,7 +971,7 @@ function ReportPage({ state, pct }) {
 function TaskHeader({ T }) {
   return (
     <div className="flex items-start gap-4">
-      <div className="shrink-0 hidden sm:block"><AchiengBust size={64} /></div>
+      <div className="shrink-0 hidden sm:block"><PersonaBust size={64} /></div>
       <div className="min-w-0">
         <Eyebrow>{T.tool} | {T.time}</Eyebrow>
         <div className="flex items-center gap-3 flex-wrap">
@@ -997,14 +1012,20 @@ function TaskPage({ id }) {
   );
 }
 
-function KnowledgeCheckPage({ taskId, state, setState }) {
+function KnowledgeCheckPage({ taskId, state, setState, celebrate }) {
   const T = TASKS[taskId];
   const answers = state.quiz[taskId] || [];
   const setAnswer = (qi, v) => setState({ ...state, quiz: { ...state.quiz, [taskId]: Object.assign([], answers, { [qi]: v }) } });
+  const answered = T.mcqs.filter((_, i) => answers[i] != null).length;
+  const prevAnswered = useRef(answered);
+  useEffect(() => {
+    if (answered === T.mcqs.length && prevAnswered.current < T.mcqs.length) celebrate();
+    prevAnswered.current = answered;
+  }, [answered]);
   return (
     <div>
       <div className="flex items-center gap-3">
-        <AchiengBust size={48} />
+        <PersonaBust size={48} />
         <div>
           <Eyebrow>Task {T.num} | {T.title}</Eyebrow>
           <h2 className="text-2xl font-bold text-slate-800 tracking-tight">Knowledge check</h2>
@@ -1016,14 +1037,19 @@ function KnowledgeCheckPage({ taskId, state, setState }) {
   );
 }
 
-function CheckpointPage({ taskId, state, setState }) {
+function CheckpointPage({ taskId, state, setState, celebrate }) {
   const T = TASKS[taskId];
   const Comp = CHECKPOINTS[T.game];
+  const result = state.games[taskId];
+  const hadResult = useRef(result != null);
+  useEffect(() => {
+    if (result != null && !hadResult.current) { celebrate(); hadResult.current = true; }
+  }, [result]);
   const setResult = (v) => setState({ ...state, games: { ...state.games, [taskId]: v } });
   return (
     <div>
       <div className="flex items-center gap-3 mb-3">
-        <AchiengBust size={48} />
+        <PersonaBust size={48} />
         <div>
           <Eyebrow>Task {T.num} | {T.title}</Eyebrow>
           <h2 className="text-2xl font-bold text-slate-800 tracking-tight">Skill checkpoint: {T.gameName}</h2>
@@ -1043,7 +1069,7 @@ function MilestoneIntro({ n, title, intro, prop, scene, tickets }) {
       <p className="text-sm text-slate-700 leading-relaxed mb-4">{intro}</p>
       <div className="grid sm:grid-cols-2 gap-3">
         {tickets.map((t, i) => (
-          <div key={i} className="rounded-xl p-4 border border-teal-100 bg-white">
+          <div key={i} className="hover-lift rounded-xl p-4 border border-teal-100 bg-white">
             <div className="flex items-center justify-between mb-1">
               <span className="font-mono text-xs text-teal-700">TICKET DL-{n}0{i + 1}</span>
               <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${i === 0 ? "bg-teal-700 text-white" : "border"}`}
@@ -1080,7 +1106,15 @@ export default function App() {
   const [state, setState] = useState({ visited: { 0: true }, quiz: {}, games: {}, checks: {}, student: { name: "", email: "" } });
   const [loaded, setLoaded] = useState(false);
   const [navOpen, setNavOpen] = useState(false);
+  const [burst, setBurst] = useState(0);
   const mainRef = useRef(null);
+  const celebrate = () => setBurst(Date.now());
+  useEffect(() => {
+    if (!burst) return;
+    const t = setTimeout(() => setBurst(0), 2000);
+    return () => clearTimeout(t);
+  }, [burst]);
+  useEffect(() => { if (loaded && PAGES[page].id === "finale") celebrate(); }, [page, loaded]);
 
   useEffect(() => {
     (async () => {
@@ -1114,15 +1148,15 @@ export default function App() {
       case "welcome": return (
         <div>
           <div className="flex items-start gap-5 flex-wrap">
-            <AchiengBust size={90} />
+            <PersonaBust size={90} />
             <div className="min-w-0 flex-1">
               <Eyebrow>A hands-on workshop for working professionals</Eyebrow>
               <h1 className="text-4xl font-bold tracking-tight text-slate-800">Data Science AI Integration</h1>
               <p className="text-xl font-semibold text-teal-700 mt-1">From Brief to Production: a hands-on sprint</p>
             </div>
           </div>
-          <Story>Monday morning. The Head of Growth stops at Achieng's desk: retailer churn is up 18 percent quarter on quarter and nobody knows why. Two weeks. Five deliverables. And the project she has been waiting for: real stakes, real data, and every part of it matching something one of three AI tools claims to do.</Story>
-          <p className="text-slate-700 text-sm leading-relaxed">You play Achieng, a data scientist at DukaLink, a Nairobi e-commerce marketplace, proving three tools on live work: <b>Gemini Gems</b> to set the standards, <b>Gemini on Colab</b> to explore safely, and <b>Claude Code</b> (or any agentic CLI) to productionize. Each tool has one required task and one optional further-practice task. Every task is followed by a knowledge check on its own page, and most by a skill checkpoint.</p>
+          <Story>Monday morning. The Head of Growth stops at your desk: retailer churn is up 18 percent quarter on quarter and nobody knows why. Two weeks. Five deliverables. And the project you have been waiting for: real stakes, real data, and every part of it matching something one of three AI tools claims to do.</Story>
+          <p className="text-slate-700 text-sm leading-relaxed">You are the data scientist at DukaLink, a Nairobi e-commerce marketplace, proving three tools on live work: <b>Gemini Gems</b> to set the standards, <b>Gemini on Colab</b> to explore safely, and <b>Claude Code</b> (or any agentic CLI) to productionize. Each tool has one required task and one optional further-practice task. Every task is followed by a knowledge check on its own page, and most by a skill checkpoint.</p>
           <div className="mt-6 rounded-2xl border border-teal-100 bg-white p-5 max-w-md">
             <div className="font-bold text-slate-800 text-sm">Who is running this sprint?</div>
             <p className="text-xs text-slate-500 mt-1 mb-3">Your knowledge-check and checkpoint results are tracked on this device and compiled into a performance report you can share once the sprint is complete.</p>
@@ -1133,7 +1167,7 @@ export default function App() {
               placeholder="Email (optional)" aria-label="Email, optional" type="email"
               className="w-full mb-3 px-3 py-2 rounded-xl border border-slate-300 text-sm focus:outline-none focus:border-teal-600" />
             <button onClick={() => go(1)} disabled={!((state.student || {}).name || "").trim()}
-              className="px-6 py-3 rounded-xl text-white font-bold bg-teal-700 hover:bg-teal-800 transition-colors disabled:opacity-40">Start the sprint</button>
+              className="hover-pop px-6 py-3 rounded-xl text-white font-bold bg-teal-700 hover:bg-teal-800 transition-colors disabled:opacity-40">Start the sprint</button>
           </div>
         </div>
       );
@@ -1173,68 +1207,71 @@ export default function App() {
             <div className="text-xs text-slate-500 mt-2">5,150 retailers and 76,503 reconciling orders, the starter and model notebooks, two workplace prompts, the flawed snippet, and the 100-second pipeline.</div></div>
         </div>
       );
-      case "story": return (
-        <div>
-          <Eyebrow>The story</Eyebrow>
-          <h2 className="text-2xl font-bold text-slate-800 tracking-tight">Meet Achieng</h2>
-          <div className="flex items-center gap-4 rounded-2xl p-4 my-4" style={{ background: MINT }}>
-            <AchiengBust size={72} />
-            <div>
-              <div className="font-bold text-slate-800">Achieng Odhiambo</div>
-              <div className="text-sm text-teal-700 font-semibold">Data Scientist, DukaLink, Nairobi</div>
-              <div className="text-xs text-slate-500">Months of reading about AI workflows. Zero of it proven on real work. Until Monday.</div>
+      case "story": {
+        const who = (state.student && state.student.name.trim()) || "Data Scientist";
+        return (
+          <div>
+            <Eyebrow>Your mission</Eyebrow>
+            <h2 className="text-2xl font-bold text-slate-800 tracking-tight">Welcome, {who}</h2>
+            <div className="flex items-center gap-4 rounded-2xl p-4 my-4" style={{ background: MINT }}>
+              <PersonaBust size={72} />
+              <div>
+                <div className="font-bold text-slate-800">{who}</div>
+                <div className="text-sm text-teal-700 font-semibold">Data Scientist, DukaLink, Nairobi</div>
+                <div className="text-xs text-slate-500">Months of reading about AI workflows. Zero of it proven on real work. Until Monday.</div>
+              </div>
             </div>
+            <p className="text-sm text-slate-700 leading-relaxed">Your brief: a cleaned, documented customer dataset; an EDA summary of what distinguishes churned retailers; a baseline churn model with an interpretation; a fast production ETL pipeline with a README; and reusable team AI assets.</p>
+            <Story>You sketch three milestones on your board: set the standards, explore safely, productionize. Each gets a required ticket and an optional one if you finish early. If the tools are worth adopting, they will earn it here. Standards first, then speed.</Story>
           </div>
-          <p className="text-sm text-slate-700 leading-relaxed">The brief: a cleaned, documented customer dataset; an EDA summary of what distinguishes churned retailers; a baseline churn model with an interpretation; a fast production ETL pipeline with a README; and reusable team AI assets.</p>
-          <Story>She sketches three milestones on her board: set the standards, explore safely, productionize. Each gets a required ticket and an optional one for whoever finishes early. If the tools are worth adopting, they will earn it here. Standards first, then speed.</Story>
-        </div>
-      );
+        );
+      }
       case "milestone": {
         if (pg.id === "m1") return <MilestoneIntro n={1} title="Set the Standards (Gemini Gems)" prop={<GemProp />}
-          scene="Monday. Achieng resists the urge to open the CSV and picks up a marker instead: the team's tribal knowledge is about to become written, testable standards."
+          scene="Monday. You resist the urge to open the CSV and pick up a marker instead: the team's tribal knowledge is about to become written, testable standards."
           intro="Before a single row is read, this milestone turns your team's habits into instructions an AI can follow. The required ticket builds the Cleaning Playbook Gem; the optional one adds a Code Review Gem that will audit everything the sprint produces later."
           tickets={["Write the Cleaning Playbook Gem and try to break it", "Build the Code Review Gem and feed it a horror"]} />;
         if (pg.id === "m2") return <MilestoneIntro n={2} title="Explore Safely (Gemini on Colab)" prop={<LaptopProp />}
-          scene="Tuesday. Standards in hand, she opens the data, and the first column staring back at her is a national ID. Exploration starts with governance."
+          scene="Tuesday. Standards in hand, you open the data, and the first column staring back at you is a national ID. Exploration starts with governance."
           intro="This milestone takes the standards into the data. The required ticket pseudonymizes the working copy and scaffolds the whole EDA from one workplace-grade prompt; the optional one interprets the provided churn model and fact-checks the AI's narration."
           tickets={["Pseudonymize, then scaffold the EDA in one prompt", "Run the provided model; interpret and verify"]} />;
         return <MilestoneIntro n={3} title="Productionize (Claude Code / agentic CLI)" prop={<TerminalProp />}
-          scene="Thursday. The notebook knows the answers; now the work has to run without her. She closes Colab and opens a terminal."
+          scene="Thursday. The notebook knows the answers; now the work has to run without you. You close Colab and open a terminal."
           intro="The final milestone moves from exploration to a pipeline anyone can run. The required ticket supervises an agent through spec, plan, diffs, and a drift-checking README; the optional one profiles the 100-second pipeline and proves a rewrite that is a few hundred times faster."
           tickets={["Spec, plan, supervise the ETL build; README with drift check", "Profile the slow pipeline, then optimize with proof"]} />;
       }
       case "task": return <TaskPage id={pg.id} />;
       case "report": return <ReportPage state={state} pct={pct} />;
-      case "kcheck": return <KnowledgeCheckPage taskId={pg.task} state={state} setState={setState} />;
-      case "checkpoint": return <CheckpointPage taskId={pg.task} state={state} setState={setState} />;
+      case "kcheck": return <KnowledgeCheckPage taskId={pg.task} state={state} setState={setState} celebrate={celebrate} />;
+      case "checkpoint": return <CheckpointPage taskId={pg.task} state={state} setState={setState} celebrate={celebrate} />;
       case "recap": {
         if (pg.id === "r1") return <RecapPage title="Milestone 1: what you learned" points={[
           "AI is briefed like a new hire: role, testable constraints, output format, and permission to say 'not covered.'",
           "You own two reusable assets: a Playbook that escalates what it should not decide, and a Reviewer that enforces your conventions.",
           "Standards were set before the data was opened, so everything downstream inherits them.",
-        ]} transition="With both Gems saved, Achieng finally opens the data. Tuesday morning, coffee in hand, a new Colab notebook, and the first thing staring back at her is a column of national IDs." />;
+        ]} transition="With both Gems saved, you finally open the data. Tuesday morning, coffee in hand, a new Colab notebook, and the first thing staring back at you is a column of national IDs." />;
         if (pg.id === "r2") return <RecapPage title="Milestone 2: what you learned" points={[
           "Pseudonymize before you prompt: structure and aggregates in, PII never, and hashed columns are still personal data.",
           "One contexted prompt beats ten lazy ones, and a traceback is prompt material too.",
           "AI writes the first draft of an interpretation; you check it against the numbers before anyone else hears it.",
           "The recorded cleaning decisions are the handover to production.",
-        ]} transition="By Thursday the exploration has answered the what: late deliveries and young accounts are where churn lives. But a notebook only she can run is not a deliverable. She closes Colab, opens VS Code, and pulls the last two tickets." />;
+        ]} transition="By Thursday the exploration has answered the what: late deliveries and young accounts are where churn lives. But a notebook only you can run is not a deliverable. You close Colab, open VS Code, and pull the last two tickets." />;
         return <RecapPage title="Milestone 3: what you learned" points={[
           "You supervised an agent: plan reviewed, every diff read, final script run by you.",
           "Profile first, verify output equivalence, then trust the speedup.",
           "A README generated from real code caught the playbook drift a manual writeup would have missed.",
           "The Gems from Milestone 1 audited the code from Milestone 3: not three tools, one workflow.",
-        ]} transition="Friday afternoon. The pipeline runs in under a second, the README survived a neighbour's read-aloud, and both Gems belong to the whole team. Before emailing the Head of Growth, she runs the whole sprint through her checklist." />;
+        ]} transition="Friday afternoon. The pipeline runs in under a second, the README survived a neighbour's read-aloud, and both Gems belong to the whole team. Before emailing the Head of Growth, you run the whole sprint through your checklist." />;
       }
       case "checklist": {
         const done = Object.values(state.checks).filter(Boolean).length;
         return (
           <div>
             <div className="flex items-center gap-3 mb-2">
-              <AchiengBust size={48} />
+              <PersonaBust size={48} />
               <div>
                 <Eyebrow>{done} of {CHECKLIST.length} verified</Eyebrow>
-                <h2 className="text-2xl font-bold text-slate-800 tracking-tight">Achieng's quality checklist</h2>
+                <h2 className="text-2xl font-bold text-slate-800 tracking-tight">Your quality checklist</h2>
               </div>
             </div>
             <div className="space-y-2 mt-3">
@@ -1251,7 +1288,7 @@ export default function App() {
       case "finale": return (
         <div>
           <div className="flex items-center gap-4 flex-wrap">
-            <AchiengBust size={84} />
+            <PersonaBust size={84} />
             <div>
               <CelebrateProps />
               <Eyebrow>Sprint complete</Eyebrow>
@@ -1264,14 +1301,14 @@ export default function App() {
             ))}
           </div>
           <p className="text-sm text-slate-700 leading-relaxed">The Playbook Gem wrote the ETL spec, the EDA notes fed the cleaning decisions, and the Code Review Gem audited the agent's output. Knowledge checks: <b>{quizScore.right} of {quizScore.total || 12}</b> answered correctly.</p>
-          <Story>Monday, Achieng was a data scientist who had read about AI integration. Friday, she is one who has shipped with it. The sprint did not test whether she could use AI. It tested whether she could supervise it, and that turned out to be the actual skill.</Story>
+          <Story>{state.student && state.student.name.trim() ? `Monday, ${state.student.name.trim()} was` : "Monday, you were"} a data scientist who had read about AI integration. Friday, you are one who has shipped with it. The sprint did not test whether you could use AI. It tested whether you could supervise it, and that turned out to be the actual skill.</Story>
           <button onClick={() => go(page + 1)} className="mt-2 px-6 py-3 rounded-xl text-white font-bold transition-colors hover:opacity-90" style={{ background: CORAL }}>See your performance report</button>
         </div>
       );
       case "further": return (
         <div>
           <div className="flex items-center gap-3 mb-2">
-            <AchiengBust size={48} />
+            <PersonaBust size={48} />
             <div>
               <Eyebrow>After the workshop</Eyebrow>
               <h2 className="text-2xl font-bold text-slate-800 tracking-tight">Further practice and learning</h2>
@@ -1318,7 +1355,7 @@ export default function App() {
                 <div className="space-y-1">
                   {PAGES.map((p, i) => p.m === mi && (
                     <button key={p.id} onClick={() => go(i)}
-                      className={`w-full flex items-center gap-2 text-left text-xs py-1.5 rounded-lg border-l-4 transition-colors ${p.sub ? "pl-6 pr-2" : "px-2.5"} ${i === page ? "bg-white shadow-sm font-semibold" : "border-transparent hover:bg-white"}`}
+                      className={`w-full flex items-center gap-2 text-left text-xs py-1.5 rounded-lg border-l-4 transition-all duration-150 hover:translate-x-0.5 ${p.sub ? "pl-6 pr-2" : "px-2.5"} ${i === page ? "bg-white shadow-sm font-semibold" : "border-transparent hover:bg-white hover:shadow-sm"}`}
                       style={i === page ? { borderLeftColor: CORAL } : {}}>
                       <span className={`w-3.5 h-3.5 rounded-full border flex items-center justify-center text-[8px] shrink-0 ${state.visited[i] ? "bg-teal-700 border-teal-700 text-white" : "border-slate-300"}`}>{state.visited[i] ? "✓" : ""}</span>
                       <span className={state.visited[i] && i !== page ? "text-slate-500" : "text-slate-700"}>{p.label}</span>
@@ -1331,12 +1368,13 @@ export default function App() {
         </nav>
 
         <main ref={mainRef} className="flex-1 min-w-0 p-4 sm:p-8">
-          <Card className="min-h-[60vh]">{content()}</Card>
+          {burst > 0 && <Confetti key={burst} />}
+          <div key={page} className="page-enter"><Card className="min-h-[60vh]">{content()}</Card></div>
           <div className="no-print flex justify-between mt-4">
             <button onClick={() => go(page - 1)} disabled={page === 0}
-              className="px-4 py-2 rounded-xl border border-slate-300 bg-white text-sm font-semibold disabled:opacity-30 hover:border-teal-600 transition-colors">← Back</button>
+              className="hover-pop px-4 py-2 rounded-xl border border-slate-300 bg-white text-sm font-semibold disabled:opacity-30 hover:border-teal-600 transition-colors">← Back</button>
             <button onClick={() => go(page + 1)} disabled={page === PAGES.length - 1}
-              className="px-4 py-2 rounded-xl text-white text-sm font-semibold disabled:opacity-30 bg-teal-700 hover:bg-teal-800 transition-colors">Next →</button>
+              className="hover-pop px-4 py-2 rounded-xl text-white text-sm font-semibold disabled:opacity-30 bg-teal-700 hover:bg-teal-800 transition-colors">Next →</button>
           </div>
         </main>
       </div>

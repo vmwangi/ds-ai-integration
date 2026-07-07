@@ -4,3 +4,40 @@
   .no-print { display: none !important; }
   main { padding: 0 !important; }
 }
+
+/* page-to-page transition: content fades and slides in on every navigation */
+@keyframes pagein {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: none; }
+}
+
+/* celebration confetti: pieces fall from the top of the viewport */
+.confetti {
+  position: fixed;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 50;
+}
+.confetti span {
+  position: absolute;
+  top: -14px;
+  display: block;
+  animation: confetti-fall ease-in both;
+}
+@keyframes confetti-fall {
+  from { transform: translateY(-4vh) rotate(0deg); opacity: 1; }
+  to { transform: translateY(105vh) rotate(540deg); opacity: 0.85; }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .page-enter { animation: pagein 0.35s ease both; }
+  .hover-lift { transition: transform 0.15s ease, box-shadow 0.15s ease; }
+  .hover-lift:hover { transform: translateY(-2px); box-shadow: 0 6px 16px rgba(15, 118, 110, 0.14); }
+  .hover-pop { transition: transform 0.12s ease; }
+  .hover-pop:hover:not(:disabled) { transform: scale(1.04); }
+  .hover-pop:active:not(:disabled) { transform: scale(0.97); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .confetti { display: none; }
+}

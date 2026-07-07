@@ -1155,7 +1155,7 @@ export default function App() {
               <p className="text-xl font-semibold text-teal-700 mt-1">From Brief to Production: a hands-on sprint</p>
             </div>
           </div>
-          <Story>Monday morning. The Head of Growth stops at your desk: retailer churn is up 18 percent quarter on quarter and nobody knows why. Two weeks. Five deliverables. And the project you have been waiting for: real stakes, real data, and every part of it matching something one of three AI tools claims to do.</Story>
+          <Story>Monday morning. The Head of Growth stops at your desk: retailer churn is up 18 percent quarter on quarter and nobody knows why. You have the next sprint to work on this project — 45 minutes, five deliverables. And it is the one you have been waiting for: real stakes, real data, and every part of it matching something one of three AI tools claims to do.</Story>
           <p className="text-slate-700 text-sm leading-relaxed">You are the data scientist at DukaLink, a Nairobi e-commerce marketplace, proving three tools on live work: <b>Gemini Gems</b> to set the standards, <b>Gemini on Colab</b> to explore safely, and <b>Claude Code</b> (or any agentic CLI) to productionize. Each tool has one required task and one optional further-practice task. Every task is followed by a knowledge check on its own page, and most by a skill checkpoint.</p>
           <div className="mt-6 rounded-2xl border border-teal-100 bg-white p-5 max-w-md">
             <div className="font-bold text-slate-800 text-sm">Who is running this sprint?</div>

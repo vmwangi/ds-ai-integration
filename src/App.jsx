@@ -205,10 +205,115 @@ DEFINITION OF DONE
 Give me your plan first as numbered steps. Do not write any code until
 I confirm the plan.`;
 
+const GEM_PLAYBOOK_PROMPT = `ROLE
+You are a data cleaning advisor for the DukaLink analytics team, a Nairobi
+e-commerce marketplace. Analysts consult you before making any cleaning
+decision on our customer and orders tables. Answer from our playbook below,
+never from generic best practice.
+
+CLEANING RULES (the playbook; apply verbatim)
+1. Categorical nulls: replace with "Unknown" and add a boolean
+   <col>_was_missing flag; never guess a category.
+2. Numeric nulls above 5 percent of the column: stop and investigate with
+   the data owner before any imputation.
+3. Numeric nulls at or below 5 percent: median impute and document the
+   count in the cleaning log.
+4. Values beyond 1.5 IQR: mark in an outlier_flag column; never drop rows.
+   Revenue outliers are usually legitimate large distributors and need a
+   business reason before any exclusion.
+5. Exact duplicate rows: drop and log the count.
+6. Duplicate customer_ids with conflicting values: write them to
+   escalations.csv and exclude from the clean output; never auto-resolve.
+
+OUTPUT FORMAT
+Respond to every question with exactly four sections:
+Decision, Rule applied, Code snippet (pandas), Caveats.
+
+REFUSAL RULES
+- Never invent column names or values you have not been shown.
+- If a situation is not covered by this playbook, say "The playbook does
+  not cover this" and name who should decide, instead of improvising.`;
+
+const GEM_REVIEWER_PROMPT = `ROLE
+You are a code reviewer enforcing the DukaLink analytics team conventions
+on Python code heading for our shared repository. Much of it is
+AI-generated, so assume nothing about intent; review what is written.
+
+CONVENTIONS TO ENFORCE
+1. Every function has a docstring stating parameter types and return type.
+2. No iterrows or itertuples in production code; vectorize instead.
+3. No chained pandas assignment; the write is silently lost.
+4. Explicit dtype handling on every read_csv; never trust inference.
+5. No hard-coded absolute paths; paths live as constants at the top.
+6. No mutable default arguments.
+
+OUTPUT FORMAT
+A table with columns: Issue, Severity (High / Medium / Low), Line
+reference, Suggested fix. After the table, one verdict line: block or
+approve. Block on any High severity issue.
+
+REFUSAL RULES
+- If the code's purpose is unclear, ask what it is meant to do before
+  reviewing; a context-free review is confident noise.
+- Enforce only the conventions above. Anything else you notice goes in a
+  separate "outside conventions" list so the team can decide whether to
+  adopt it.`;
+
+const INTERPRET_PROMPT = `CONTEXT
+You are helping the DukaLink analytics team read the outputs of a baseline
+churn model (random forest, scikit-learn) trained on 5,150 retailers,
+80 percent retained and 20 percent churned. I am pasting three outputs
+from the notebook exactly as printed:
+
+<paste the class balance output here>
+
+<paste the confusion matrix and classification report here>
+
+<paste the top ten SHAP values here>
+
+TASK
+1. A business-language interpretation for a Head of Growth who does not
+   know what recall is: what the model catches, what it misses, and what
+   that costs us in practice. Amounts in KES where relevant.
+2. A list of ways this result could mislead someone reading it quickly,
+   ordered by how expensive the misreading would be.
+3. The top three churn drivers from the SHAP values, stated as testable
+   hypotheses ("retailers with X churn more; we could verify by Y"),
+   never as conclusions.
+
+CONSTRAINTS
+- Every claim must point at a specific number in the outputs above.
+- Do not soften the weaknesses; the team pays for missed churners, not
+  for a flattering summary.
+- If a claim cannot be supported by the pasted numbers alone, label it
+  "needs verification" instead of asserting it.`;
+
+const OPTIMIZE_PROMPT = `CONTEXT
+slow_pipeline.py builds a customer order summary from dukalink_orders.csv
+(76,503 rows covering 12 months). It takes about 100 seconds on an analyst
+laptop and runs monthly. Python 3.10, pandas.
+
+TASK, IN THIS ORDER
+1. Profile the script with cProfile and report the top three time sinks
+   as: function, cumulative seconds, percent of total runtime. Do not
+   change any code yet.
+2. Stop and wait for my confirmation of the profile.
+3. Only then rewrite the hot paths, under these constraints:
+   - Output must be identical to the original script's output; write the
+     comparison check yourself and show it passing.
+   - The diff must be reviewable function by function; no wholesale
+     rewrite of untouched code.
+   - Record before and after wall-clock timings in a short table.
+
+NON-GOALS
+- No new dependencies (no polars, no dask); pandas only this round.
+- No behaviour changes, however tempting; file them as suggestions at
+  the end instead.`;
+
 /* ---------------- tasks ---------------- */
 const TASKS = {
   t1: {
-    num: 1, time: "25 min", required: true, title: "The Data Cleaning Playbook Gem", tool: "Gemini Gems",
+    num: 1, time: "15 min", required: true, title: "The Data Cleaning Playbook Gem", tool: "Gemini Gems",
     concept: "Writing effective Gem instructions (role, constraints, output format, refusal rules) and encoding team cleaning rules into a reusable Playbook Gem.",
     snapshot: {
       def: "A Gem briefed with four elements that answers every cleaning question with your team's rules for nulls, outliers, and duplicates instead of generic advice.",
@@ -232,6 +337,7 @@ const TASKS = {
       { q: "You find 150 duplicate customer IDs with conflicting values. Per the playbook, you:", opts: ["Keep the most recent record", "Average the conflicting values", "Escalate for human resolution", "Drop all affected rows"], a: 2, ex: "Conflicting duplicates carry a business decision, so the playbook escalates rather than auto-resolves." },
     ],
     game: "fix", gameName: "Fix the Brief",
+    prompt: GEM_PLAYBOOK_PROMPT, promptLabel: "The full Gem brief (copy into the Gem builder, then adapt to your team)",
   },
   t2: {
     num: 2, time: "20 min", required: false, title: "The Code Review Gem", tool: "Gemini Gems",
@@ -257,9 +363,10 @@ const TASKS = {
       { q: "The Gem flags nothing on a snippet you know is flawed. Best next step:", opts: ["Assume the code is fine", "Ask the Gem to try harder", "Rewrite from scratch", "Check whether the convention is in the Gem's instructions, then add it"], a: 3, ex: "A Gem can only enforce conventions in its brief; the gap is in the brief, not the code." },
     ],
     game: "spot", gameName: "Spot the Violation", files: ["flawed_snippet.py"],
+    prompt: GEM_REVIEWER_PROMPT, promptLabel: "The full Code Reviewer Gem brief (copy into the Gem builder, then adapt)",
   },
   t3: {
-    num: 3, time: "30 min", required: true, title: "The Privacy-First EDA Scaffold", tool: "Gemini on Colab",
+    num: 3, time: "15 min", required: true, title: "The Privacy-First EDA Scaffold", tool: "Gemini on Colab",
     concept: "Pseudonymization habits plus a full EDA scaffold (distributions, correlations, missingness) from one well-contexted prompt.",
     snapshot: {
       def: "Pseudonymize identifiers and fix what may never enter a prompt before prompting at all, then one contexted prompt produces the whole scaffold.",
@@ -305,9 +412,10 @@ const TASKS = {
       { q: "The AI calls one SHAP feature 'the dominant driver.' Before repeating it:", opts: ["Ask the AI if it is sure", "Accept it, SHAP is objective", "Check the actual SHAP magnitudes", "Re-run without the feature"], a: 2, ex: "Confidence is not evidence; the magnitudes either support 'dominant' or they do not." },
     ],
     game: "bluff", gameName: "Call the Bluff", files: ["baseline_model.ipynb"],
+    prompt: INTERPRET_PROMPT, promptLabel: "The workplace interpretation prompt (paste your real outputs into it)",
   },
   t5: {
-    num: 5, time: "35 min", required: true, title: "The Self-Correcting ETL Build", tool: "Claude Code / agentic CLI",
+    num: 5, time: "15 min", required: true, title: "The Self-Correcting ETL Build", tool: "Claude Code / agentic CLI",
     concept: "An agent writes, runs, and fixes an ETL script from your spec, under plan and diff review, closed with a README from the real code.",
     snapshot: {
       def: "A written spec drives an execute-and-fix loop; you review the plan up front and every diff along the way.",
@@ -354,6 +462,7 @@ const TASKS = {
       { q: "The rewrite runs a few hundred times faster. Before celebrating:", opts: ["Commit before the timing changes", "Confirm its output is identical to the original's", "Ask for 1,000 times faster", "Delete the slow version"], a: 1, ex: "A faster pipeline with different output is a silent failure; equivalence comes before celebration." },
     ],
     game: "bet", gameName: "Bet on the Bottleneck", files: ["slow_pipeline.py", "dukalink_orders.csv"],
+    prompt: OPTIMIZE_PROMPT, promptLabel: "The workplace profile-then-optimize prompt (adapt, do not retype)",
   },
 };
 
@@ -845,7 +954,7 @@ function ScoreChart({ rows }) {
         const kcNote = r.kc.attempted ? `${r.kc.right} of ${r.kc.total} correct` : "Not attempted";
         return (
           <g key={r.id}>
-            <text x={x0 - 8} y={gy + barH + gap / 2 + 3} fontSize="11" fill="#334155" textAnchor="end">{r.T.num} · {SHORT[r.id]}</text>
+            <text x={x0 - 8} y={gy + barH + gap / 2 + 3} fontSize="11" fill="#334155" textAnchor="end">{r.T.num} · {SHORT[r.id]}{r.T.required ? "" : " *"}</text>
             <Bar y={gy} pct={r.kc.pct} color={KC_COLOR} note={`Knowledge check — ${kcNote}`} />
             <Bar y={gy + barH + gap} pct={r.cp.na || r.cp.lesson ? null : r.cp.attempted ? r.cp.pct : null} color={CP_COLOR} note={`Checkpoint — ${r.cp.note}`} />
           </g>
@@ -902,7 +1011,10 @@ function ReportPage({ state, pct }) {
       </div>
 
       <h3 className="font-bold text-teal-800 mt-6 mb-1">Scores per task</h3>
-      <div className="rounded-xl border border-teal-100 bg-white p-4 overflow-x-auto"><ScoreChart rows={rows} /></div>
+      <div className="rounded-xl border border-teal-100 bg-white p-4 overflow-x-auto">
+        <ScoreChart rows={rows} />
+        <p className="text-xs text-slate-500 mt-2">* optional further-practice task; skipping it is expected in the 45-minute sprint.</p>
+      </div>
 
       <div className="grid sm:grid-cols-2 gap-4 mt-5">
         <div className="rounded-xl border border-teal-100 bg-white p-4">
@@ -933,7 +1045,8 @@ function ReportPage({ state, pct }) {
               </li>
             ))}
           </ul>
-          {skipped.length > 0 && <p className="text-xs text-slate-500 mt-3">Not yet attempted: {skipped.map((r) => `Task ${r.T.num}`).join(", ")}.</p>}
+          {skipped.some((r) => r.T.required) && <p className="text-xs font-semibold mt-3" style={{ color: CORAL }}>Required but not attempted: {skipped.filter((r) => r.T.required).map((r) => `Task ${r.T.num}`).join(", ")}.</p>}
+          {skipped.some((r) => !r.T.required) && <p className="text-xs text-slate-500 mt-2">Optional tasks not attempted (fine to skip): {skipped.filter((r) => !r.T.required).map((r) => `Task ${r.T.num}`).join(", ")}.</p>}
         </div>
       </div>
 
@@ -948,7 +1061,7 @@ function ReportPage({ state, pct }) {
           <tbody>
             {rows.map((r) => (
               <tr key={r.id} className="border-b border-slate-50 last:border-0">
-                <td className="px-4 py-2 text-slate-700">{r.T.num} · {SHORT[r.id]}</td>
+                <td className="px-4 py-2 text-slate-700">{r.T.num} · {SHORT[r.id]}{!r.T.required && <span className="ml-2 text-[10px] font-bold px-1.5 py-0.5 rounded-full border align-middle" style={{ borderColor: CORAL, color: CORAL }}>OPTIONAL</span>}</td>
                 <td className="px-4 py-2 text-slate-600" style={{ fontVariantNumeric: "tabular-nums" }}>{r.kc.attempted ? `${r.kc.right} / ${r.kc.total}` : "Not attempted"}</td>
                 <td className="px-4 py-2 text-slate-600">{r.cp.note}</td>
               </tr>
@@ -1184,7 +1297,7 @@ export default function App() {
               <span className="font-bold text-slate-800 sm:w-64 shrink-0">{a}.</span><span className="text-slate-600">{b}</span>
             </div>
           ))}
-          <p className="text-xs text-slate-500 mt-4">Required path is about 2 hours; optional further-practice tasks and checkpoints stretch it to 3.5. Stretch challenges live at the end as after-workshop learning.</p>
+          <p className="text-xs text-slate-500 mt-4">The three required tasks are the 45-minute sprint. The optional further-practice tasks are for fast finishers and for after the session, and the stretch challenges live at the end as after-workshop learning.</p>
         </div>
       );
       case "setup": return (

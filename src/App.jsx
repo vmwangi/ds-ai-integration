@@ -1161,10 +1161,7 @@ export default function App() {
             <div className="font-bold text-slate-800 text-sm">Who is running this sprint?</div>
             <p className="text-xs text-slate-500 mt-1 mb-3">Your knowledge-check and checkpoint results are tracked on this device and compiled into a performance report you can share once the sprint is complete.</p>
             <input value={(state.student || {}).name || ""} onChange={(e) => setState({ ...state, student: { ...state.student, name: e.target.value } })}
-              placeholder="Full name" aria-label="Full name"
-              className="w-full mb-2 px-3 py-2 rounded-xl border border-slate-300 text-sm focus:outline-none focus:border-teal-600" />
-            <input value={(state.student || {}).email || ""} onChange={(e) => setState({ ...state, student: { ...state.student, email: e.target.value } })}
-              placeholder="Email (optional)" aria-label="Email, optional" type="email"
+              placeholder="Your name" aria-label="Your name"
               className="w-full mb-3 px-3 py-2 rounded-xl border border-slate-300 text-sm focus:outline-none focus:border-teal-600" />
             <button onClick={() => go(1)} disabled={!((state.student || {}).name || "").trim()}
               className="hover-pop px-6 py-3 rounded-xl text-white font-bold bg-teal-700 hover:bg-teal-800 transition-colors disabled:opacity-40">Start the sprint</button>

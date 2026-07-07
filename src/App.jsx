@@ -1012,7 +1012,7 @@ function TaskPage({ id }) {
   );
 }
 
-function KnowledgeCheckPage({ taskId, state, setState, celebrate }) {
+function KnowledgeCheckPage({ taskId, state, setState, celebrate, who }) {
   const T = TASKS[taskId];
   const answers = state.quiz[taskId] || [];
   const setAnswer = (qi, v) => setState({ ...state, quiz: { ...state.quiz, [taskId]: Object.assign([], answers, { [qi]: v }) } });
@@ -1031,7 +1031,7 @@ function KnowledgeCheckPage({ taskId, state, setState, celebrate }) {
           <h2 className="text-2xl font-bold text-slate-800 tracking-tight">Knowledge check</h2>
         </div>
       </div>
-      <p className="text-sm text-slate-600 mt-2">Two questions, instant feedback. Answer before moving on.</p>
+      <p className="text-sm text-slate-600 mt-2">Two questions, {who}. Instant feedback; answer before moving on.</p>
       {T.mcqs.map((q, qi) => <MCQ key={qi} idx={qi} data={q} saved={answers[qi]} onAnswer={(v) => setAnswer(qi, v)} />)}
     </div>
   );
@@ -1141,6 +1141,7 @@ export default function App() {
     return acc;
   }, { right: 0, total: 0 });
   const setChecks = (i) => setState({ ...state, checks: { ...state.checks, [i]: !state.checks[i] } });
+  const who = ((state.student || {}).name || "").trim() || "Data Scientist";
 
   const content = () => {
     const pg = PAGES[page];
@@ -1205,7 +1206,6 @@ export default function App() {
         </div>
       );
       case "story": {
-        const who = (state.student && state.student.name.trim()) || "Data Scientist";
         return (
           <div>
             <Eyebrow>Your mission</Eyebrow>
@@ -1225,21 +1225,21 @@ export default function App() {
       }
       case "milestone": {
         if (pg.id === "m1") return <MilestoneIntro n={1} title="Set the Standards (Gemini Gems)" prop={<GemProp />}
-          scene="Monday. You resist the urge to open the CSV and pick up a marker instead: the team's tribal knowledge is about to become written, testable standards."
+          scene={`Monday, ${who}. You resist the urge to open the CSV and pick up a marker instead: the team's tribal knowledge is about to become written, testable standards.`}
           intro="Before a single row is read, this milestone turns your team's habits into instructions an AI can follow. The required ticket builds the Cleaning Playbook Gem; the optional one adds a Code Review Gem that will audit everything the sprint produces later."
           tickets={["Write the Cleaning Playbook Gem and try to break it", "Build the Code Review Gem and feed it a horror"]} />;
         if (pg.id === "m2") return <MilestoneIntro n={2} title="Explore Safely (Gemini on Colab)" prop={<LaptopProp />}
-          scene="Tuesday. Standards in hand, you open the data, and the first column staring back at you is a national ID. Exploration starts with governance."
+          scene={`Tuesday, ${who}. Standards in hand, you open the data, and the first column staring back at you is a national ID. Exploration starts with governance.`}
           intro="This milestone takes the standards into the data. The required ticket pseudonymizes the working copy and scaffolds the whole EDA from one workplace-grade prompt; the optional one interprets the provided churn model and fact-checks the AI's narration."
           tickets={["Pseudonymize, then scaffold the EDA in one prompt", "Run the provided model; interpret and verify"]} />;
         return <MilestoneIntro n={3} title="Productionize (Claude Code / agentic CLI)" prop={<TerminalProp />}
-          scene="Thursday. The notebook knows the answers; now the work has to run without you. You close Colab and open a terminal."
+          scene={`Thursday, ${who}. The notebook knows the answers; now the work has to run without you. You close Colab and open a terminal.`}
           intro="The final milestone moves from exploration to a pipeline anyone can run. The required ticket supervises an agent through spec, plan, diffs, and a drift-checking README; the optional one profiles the 100-second pipeline and proves a rewrite that is a few hundred times faster."
           tickets={["Spec, plan, supervise the ETL build; README with drift check", "Profile the slow pipeline, then optimize with proof"]} />;
       }
       case "task": return <TaskPage id={pg.id} />;
       case "report": return <ReportPage state={state} pct={pct} />;
-      case "kcheck": return <KnowledgeCheckPage taskId={pg.task} state={state} setState={setState} celebrate={celebrate} />;
+      case "kcheck": return <KnowledgeCheckPage taskId={pg.task} state={state} setState={setState} celebrate={celebrate} who={who} />;
       case "checkpoint": return <CheckpointPage taskId={pg.task} state={state} setState={setState} celebrate={celebrate} />;
       case "recap": {
         if (pg.id === "r1") return <RecapPage title="Milestone 1: what you learned" points={[
@@ -1252,7 +1252,7 @@ export default function App() {
           "One contexted prompt beats ten lazy ones, and a traceback is prompt material too.",
           "AI writes the first draft of an interpretation; you check it against the numbers before anyone else hears it.",
           "The recorded cleaning decisions are the handover to production.",
-        ]} transition="By Thursday the exploration has answered the what: late deliveries and young accounts are where churn lives. But a notebook only you can run is not a deliverable. You close Colab, open VS Code, and pull the last two tickets." />;
+        ]} transition={`By Thursday the exploration has answered the what: late deliveries and young accounts are where churn lives. But a notebook only you can run is not a deliverable, ${who}. You close Colab, open VS Code, and pull the last two tickets.`} />;
         return <RecapPage title="Milestone 3: what you learned" points={[
           "You supervised an agent: plan reviewed, every diff read, final script run by you.",
           "Profile first, verify output equivalence, then trust the speedup.",
@@ -1268,7 +1268,7 @@ export default function App() {
               <PersonaBust size={48} />
               <div>
                 <Eyebrow>{done} of {CHECKLIST.length} verified</Eyebrow>
-                <h2 className="text-2xl font-bold text-slate-800 tracking-tight">Your quality checklist</h2>
+                <h2 className="text-2xl font-bold text-slate-800 tracking-tight">{who}'s quality checklist</h2>
               </div>
             </div>
             <div className="space-y-2 mt-3">

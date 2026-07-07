@@ -1,0 +1,43 @@
+CONTEXT
+DukaLink (Nairobi e-commerce marketplace) needs a monthly-refresh ETL for
+the retailer churn analysis. It runs on an analyst laptop today and a
+scheduled runner later, so plain Python scripts, no notebook code.
+Environment: Python 3.10, pandas, pyarrow.
+
+INPUTS
+- dukalink_customers.csv (5,150 rows; contains known quality issues)
+- dukalink_orders.csv (76,503 rows covering 12 months)
+Schemas below, pasted from df.info():
+
+<paste both schemas here>
+
+CLEANING RULES (verbatim from the team playbook; do not reinterpret)
+1. Categorical nulls become "Unknown" plus a boolean <col>_was_missing flag
+2. Numeric nulls above 5 percent: stop and report; do not impute
+3. Numeric nulls at or below 5 percent: median impute and log the count
+4. Values beyond 1.5 IQR: mark in an outlier_flag column, never drop rows;
+   revenue outliers are legitimate large distributors
+5. Exact duplicate rows: drop and log the count
+6. Duplicate customer_ids with conflicting values: write them to
+   escalations.csv and exclude from the clean output; never auto-resolve
+
+REQUIREMENTS
+- Validation runs BEFORE transformation: row counts, required columns,
+  dtypes, and customer_id uniqueness after dedup; fail loudly with a clear
+  message naming the check that failed
+- Output: clean_customers.parquet with explicit dtypes, plus one printed
+  summary line per cleaning rule applied (rule, rows affected)
+- Deterministic: same inputs must produce identical output
+- No hard-coded absolute paths; paths live as constants at the top
+- Small unit-testable functions; docstrings with parameter types
+
+NON-GOALS
+- No modeling, no plotting, no database writes in this version
+
+DEFINITION OF DONE
+- Runs end to end from a fresh terminal
+- Re-running produces identical output
+- escalations.csv contains the 30 conflicting IDs planted in the data
+
+Give me your plan first as numbered steps. Do not write any code until
+I confirm the plan.

@@ -1,0 +1,33 @@
+CONTEXT
+You are helping the DukaLink analytics team investigate retailer churn,
+which is up 18 percent quarter on quarter. I am working in a Colab
+notebook on a pseudonymized copy of our customer table (5,150 rows;
+national IDs removed, phone numbers hashed). Here is the exact structure,
+pasted from the live dataframe:
+
+<paste your df.info() output here>
+
+<paste your df.describe(include="all") output here>
+
+Notes you must account for:
+- avg_order_value_kes is in Kenyan Shillings; a handful of accounts are
+  large distributors with averages above KES 200,000 that are legitimate,
+  not errors
+- business_type has missing values; treat missing as its own category
+- churned is the target: 1 means the retailer stopped ordering
+- signup_date arrives as a string and needs parsing
+- the table still contains duplicate rows; do not assume uniqueness
+
+TASK
+Generate a complete EDA scaffold as separate notebook cells:
+1. Distributions of every numeric column, log scale where skewed
+2. Frequency tables and bar charts for every categorical column
+3. A correlation heatmap of the numeric columns
+4. A missingness summary: count and percent per column, sorted descending
+
+CONSTRAINTS
+- seaborn; one markdown-headed section per component
+- every chart titled, axes labelled with units (KES where relevant)
+- where it makes sense, split or colour charts by churned vs retained
+- no row-level printing anywhere: this data is pseudonymized, not anonymous
+- each section must run independently after a single imports cell

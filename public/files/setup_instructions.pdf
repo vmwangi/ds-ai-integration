@@ -1,0 +1,182 @@
+%PDF-1.4
+1 0 obj
+<< /Type /Catalog /Pages 2 0 R >>
+endobj
+2 0 obj
+<< /Type /Pages /Kids [3 0 R] /Count 1 >>
+endobj
+3 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Contents 4 0 R /Resources << /Font << /F1 5 0 R /F2 6 0 R >> >> >>
+endobj
+4 0 obj
+<< /Length 2476 >>
+stream
+BT
+1 0 0 1 60 740 Tm
+/F2 16 Tf
+24 TL
+(Data Science AI Integration: From Brief to Production) Tj
+T*
+/F2 12 Tf
+20 TL
+(Set up before the event) Tj
+T*
+/F1 10.5 Tf
+15 TL
+() Tj
+T*
+/F1 10.5 Tf
+15 TL
+(There is no setup time in the session; the first task begins a few) Tj
+T*
+/F1 10.5 Tf
+15 TL
+(minutes in. Arrive with everything below already working.) Tj
+T*
+/F1 10.5 Tf
+15 TL
+() Tj
+T*
+/F2 10.5 Tf
+15 TL
+(ACCOUNTS) Tj
+T*
+/F1 10.5 Tf
+15 TL
+(- A Google account with Gemini and Gems \(gemini.google.com\), plus) Tj
+T*
+/F1 10.5 Tf
+15 TL
+(  Colab with Gemini enabled \(colab.research.google.com\).) Tj
+T*
+/F1 10.5 Tf
+15 TL
+(- A Claude account \(Pro or Team\) with Claude Code in VS Code.) Tj
+T*
+/F1 10.5 Tf
+15 TL
+(- No Claude subscription? The open-source Gemini CLI is free with a) Tj
+T*
+/F1 10.5 Tf
+15 TL
+(  personal Google account: npm install -g @google/gemini-cli, then) Tj
+T*
+/F1 10.5 Tf
+15 TL
+(  run gemini in the project folder. The agentic milestone works with) Tj
+T*
+/F1 10.5 Tf
+15 TL
+(  any agentic coding tool.) Tj
+T*
+/F1 10.5 Tf
+15 TL
+() Tj
+T*
+/F2 10.5 Tf
+15 TL
+(SOFTWARE) Tj
+T*
+/F1 10.5 Tf
+15 TL
+(- VS Code with a terminal, and Git.) Tj
+T*
+/F1 10.5 Tf
+15 TL
+(- Python 3.10 or newer with pandas, seaborn, scikit-learn, and shap:) Tj
+T*
+/F1 10.5 Tf
+15 TL
+(  pip install pandas seaborn scikit-learn shap) Tj
+T*
+/F1 10.5 Tf
+15 TL
+() Tj
+T*
+/F2 10.5 Tf
+15 TL
+(WORKSHOP FILES) Tj
+T*
+/F1 10.5 Tf
+15 TL
+(- Download workshop_files.zip from the workshop site and unzip it) Tj
+T*
+/F1 10.5 Tf
+15 TL
+(  into a working folder you can open in VS Code.) Tj
+T*
+/F1 10.5 Tf
+15 TL
+(- Contents: dukalink_customers.csv, dukalink_orders.csv,) Tj
+T*
+/F1 10.5 Tf
+15 TL
+(  colab_starter.ipynb, baseline_model.ipynb, flawed_snippet.py,) Tj
+T*
+/F1 10.5 Tf
+15 TL
+(  slow_pipeline.py, and the prompts folder \(eda_prompt.txt,) Tj
+T*
+/F1 10.5 Tf
+15 TL
+(  etl_spec_prompt.txt\).) Tj
+T*
+/F1 10.5 Tf
+15 TL
+() Tj
+T*
+/F2 10.5 Tf
+15 TL
+(QUICK SELF-TEST \(five minutes, the night before\)) Tj
+T*
+/F1 10.5 Tf
+15 TL
+(1. Open gemini.google.com and confirm you can create a Gem.) Tj
+T*
+/F1 10.5 Tf
+15 TL
+(2. Open a Colab notebook and confirm Gemini is available in it.) Tj
+T*
+/F1 10.5 Tf
+15 TL
+(3. In VS Code, open the unzipped folder and start your agentic CLI) Tj
+T*
+/F1 10.5 Tf
+15 TL
+(   \(Claude Code, or gemini\) without errors.) Tj
+T*
+/F1 10.5 Tf
+15 TL
+(4. Run: python -c "import pandas, seaborn, sklearn, shap") Tj
+T*
+/F1 10.5 Tf
+15 TL
+() Tj
+T*
+/F1 10.5 Tf
+15 TL
+(See you at the sprint. Asante sana!) Tj
+T*
+ET
+endstream
+endobj
+5 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>
+endobj
+6 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold >>
+endobj
+xref
+0 7
+0000000000 65535 f 
+0000000009 00000 n 
+0000000058 00000 n 
+0000000115 00000 n 
+0000000251 00000 n 
+0000002778 00000 n 
+0000002848 00000 n 
+trailer
+<< /Size 7 /Root 1 0 R >>
+startxref
+2923
+%%EOF

@@ -24,18 +24,32 @@ const store = {
   },
 };
 
-/* ---------------- inline text formatting: `code` spans ---------------- */
-const fmt = (s) =>
-  s.split("`").map((part, i) =>
-    i % 2 ? (
-      <code key={i} className="font-mono text-xs bg-slate-100 border border-slate-200 rounded px-1 py-0.5 text-slate-800 break-words">{part}</code>
-    ) : (
-      <span key={i}>{part}</span>
-    )
-  );
-
 /* ---------------- resource links (served from this repository's public/files) ---------------- */
 const RES = (p) => `files/${p}`;
+
+/* ---------------- inline text formatting: `code` spans ----------------
+   Backticked tokens that name a workshop file or a known site render as
+   live links opening in a new tab; everything else stays a code span. */
+const EXTERNAL_LINKS = {
+  "gemini.google.com": "https://gemini.google.com",
+  "colab.research.google.com": "https://colab.research.google.com",
+};
+const FILE_TOKENS = [
+  "dukalink_customers.csv", "dukalink_orders.csv", "colab_starter.ipynb",
+  "baseline_model.ipynb", "flawed_snippet.py", "slow_pipeline.py",
+  "prompts/eda_prompt.txt", "prompts/etl_spec_prompt.txt", "workshop_files.zip",
+];
+const fmt = (s) =>
+  s.split("`").map((part, i) => {
+    if (i % 2 === 0) return <span key={i}>{part}</span>;
+    const href = EXTERNAL_LINKS[part] || (FILE_TOKENS.includes(part) ? RES(part) : null);
+    const base = "font-mono text-xs bg-slate-100 border border-slate-200 rounded px-1 py-0.5 break-words";
+    return href ? (
+      <a key={i} href={href} target="_blank" rel="noreferrer" className={`${base} text-teal-800 underline decoration-teal-400 hover:bg-teal-50`}>{part}</a>
+    ) : (
+      <code key={i} className={`${base} text-slate-800`}>{part}</code>
+    );
+  });
 const FileChip = ({ name, path }) => (
   <a href={RES(path || name)} download target="_blank" rel="noreferrer"
     className="hover-lift inline-flex items-center gap-1.5 text-xs font-mono font-semibold px-2.5 py-1 rounded-lg border border-teal-200 bg-white text-teal-800 hover:bg-teal-50 transition-colors">
@@ -312,6 +326,36 @@ NON-GOALS
 - No behaviour changes, however tempting; file them as suggestions at
   the end instead.`;
 
+const SKILL_TEMPLATE = `---
+name: dukalink-cleaning-playbook
+description: DukaLink data-cleaning rules. Use whenever cleaning, imputing,
+  deduplicating, or outlier-flagging DukaLink customer or orders data, or
+  when reviewing code that does.
+---
+
+# DukaLink Cleaning Playbook
+
+Apply these rules verbatim; never improvise beyond them.
+
+1. Categorical nulls: replace with "Unknown" and add a boolean
+   <col>_was_missing flag; never guess a category.
+2. Numeric nulls above 5 percent of the column: stop and report to the
+   data owner before any imputation.
+3. Numeric nulls at or below 5 percent: median impute and log the count.
+4. Values beyond 1.5 IQR: mark in an outlier_flag column; never drop rows.
+   Revenue outliers are usually legitimate large distributors.
+5. Exact duplicate rows: drop and log the count.
+6. Duplicate customer_ids with conflicting values: write to
+   escalations.csv and exclude from clean output; never auto-resolve.
+
+## Output format
+Answer cleaning questions with: Decision, Rule applied,
+Code snippet (pandas), Caveats.
+
+## When the playbook does not cover it
+Say "The playbook does not cover this" and name who should decide,
+instead of improvising a rule.`;
+
 /* ---------------- tasks ---------------- */
 const TASKS = {
   t1: {
@@ -335,6 +379,7 @@ const TASKS = {
     ],
     stretch: "Add a rule your real team argues about (timezones, currency codes, negative quantities) as a testable constraint, then write a question where two rules conflict and see whether the Gem states a precedence or improvises one.",
     game: "fix", gameName: "Fix the Brief",
+    how: "A draft Gem brief arrives broken on all four elements. For each element, read the broken draft, click the one repair you would actually ship, then hit Score my brief. One attempt; aim for 4 of 4.",
     prompt: GEM_PLAYBOOK_PROMPT, promptStep: 5, promptLabel: "The full brief these steps assemble (copy into the Gem builder, then adapt to your team)",
   },
   t2: {
@@ -357,6 +402,7 @@ const TASKS = {
     ],
     stretch: "Give the Gem a severity policy (block on High, warn on Medium), then feed it a clean-looking snippet with target leakage. Style conventions will not catch a logic error, and articulating why is the point.",
     game: "spot", gameName: "Spot the Violation", files: ["flawed_snippet.py"],
+    how: "Nine lines of code, four convention violations hiding in them. Click every line you would flag in review (click again to unflag), then compare your catches with the Gem's.",
     prompt: GEM_REVIEWER_PROMPT, promptStep: 3, promptLabel: "The full Code Reviewer brief these steps assemble (copy into the Gem builder, then adapt)",
   },
   t3: {
@@ -377,7 +423,9 @@ const TASKS = {
       ["Read the missingness summary against your Playbook Gem and record, in a markdown cell, the cleaning decisions for Milestone 3.", "exploration hands production a to-do list."],
     ],
     stretch: "Survive the signup_date parsing and mixed-dtype trap with zero traceback rounds, purely by enriching the prompt's Notes. Then extend to class-conditional EDA: every numeric distribution split by churned vs retained with a one-line takeaway.",
-    game: "paste", gameName: "Safe to Paste?", files: ["colab_starter.ipynb", "dukalink_customers.csv", "dukalink_orders.csv", "prompts/eda_prompt.txt"], prompt: EDA_PROMPT, promptStep: 2, promptLabel: "The workplace EDA prompt (shipped as prompts/eda_prompt.txt; adapt, do not retype)",
+    game: "paste", gameName: "Safe to Paste?", files: ["colab_starter.ipynb", "dukalink_customers.csv", "dukalink_orders.csv", "prompts/eda_prompt.txt"],
+    how: "Six cards, one split-second decision each: would you paste this into a prompt? Click Safe or Unsafe; you get instant feedback and the next card deals itself.",
+    prompt: EDA_PROMPT, promptStep: 2, promptLabel: "The workplace EDA prompt (shipped as prompts/eda_prompt.txt; adapt, do not retype)",
   },
   t4: {
     num: 4, time: "30 min", required: false, title: "Interpreting the Model, Not Just Training It", tool: "Gemini on Colab",
@@ -398,6 +446,7 @@ const TASKS = {
     ],
     stretch: "Two directions. Cost-optimal threshold: a retention offer costs KES 1,500 and a saved churner is worth KES 40,000; ask for the profit-optimal threshold, then verify by sweeping thresholds yourself. And: run the provided modeling code past your own Playbook Gem. One line quietly violates a rule your team wrote this morning.",
     game: "bluff", gameName: "Call the Bluff", files: ["baseline_model.ipynb"],
+    how: "Three polished AI interpretations of the same confusion matrix; one misreads it. Click the statement you think is the bluff, then prove the call by clicking the matrix cell that exposes it.",
     prompt: INTERPRET_PROMPT, promptStep: 1, promptLabel: "The workplace interpretation prompt (paste your real outputs into it)",
   },
   t5: {
@@ -419,7 +468,13 @@ const TASKS = {
       ["Flex: request the README with the added instruction `Flag any place where the code and the cleaning playbook disagree.` Reconcile the drift, then a neighbour reads the README aloud and follows it while you stay silent.", "docs from real code catch drift; a walkthrough catches what the docs missed."],
     ],
     stretch: "Extend the spec with a pandera or Great Expectations validation module, make the pipeline idempotent on partial re-runs, and parameterize the refresh month for backfills. Keep plan-first discipline for every addition.",
-    game: null, files: ["prompts/etl_spec_prompt.txt", "dukalink_customers.csv", "dukalink_orders.csv"], prompt: ETL_PROMPT, promptStep: 1, promptLabel: "The workplace ETL spec (shipped as prompts/etl_spec_prompt.txt; adapt, do not retype)",
+    game: "quiz", gameName: "Supervise the Build",
+    how: "Two scenario questions from the build you just ran. Pick the call you would make on the job; one pick per question, instant feedback, and your score counts toward your highlights.",
+    quiz: [
+      { q: "The agent proposes a plan for etl.py. Your best first move:", opts: ["Read it and adjust or reject any step that conflicts with the spec", "Approve immediately, plans cost nothing", "Skip the plan, ask for code", "Ask for three alternative plans"], a: 0, ex: "The plan is the cheapest point to intervene; reviewing it is the supervision the workflow depends on." },
+      { q: "Why instruct the README generator to flag code-playbook disagreements?", opts: ["Longer README", "Documents the agent's reasoning", "Satisfies audits automatically", "It catches rule drift introduced during the fix loop"], a: 3, ex: "Fix loops quietly move thresholds; a code-aware doc pass surfaces the drift." },
+    ],
+    files: ["prompts/etl_spec_prompt.txt", "dukalink_customers.csv", "dukalink_orders.csv"], prompt: ETL_PROMPT, promptStep: 1, promptLabel: "The workplace ETL spec (shipped as prompts/etl_spec_prompt.txt; adapt, do not retype)",
   },
   t6: {
     num: 6, time: "25 min", required: false, title: "Profile, Then Optimize", tool: "Claude Code / agentic CLI",
@@ -440,7 +495,30 @@ const TASKS = {
     ],
     stretch: "Race the machine: write your own optimized version first, verify both against the original, compare timings. Then port the winner to polars and prove equivalence across libraries, not just versions.",
     game: "bet", gameName: "Bet on the Bottleneck", files: ["slow_pipeline.py", "dukalink_orders.csv"],
+    how: "Commit before the evidence: pick the function you believe eats the 100 seconds, choose how many points to stake on it, then reveal the profile and see how your intuition did. Losing here is the designed lesson.",
     prompt: OPTIMIZE_PROMPT, promptStep: 1, promptLabel: "The workplace profile-then-optimize prompt (adapt, do not retype)",
+  },
+  t7: {
+    num: null, time: "25 min", required: false, title: "Package the Playbook as an Agent Skill", tool: "Agent Skills: Claude Code, or the open-source Gemini CLI",
+    concept: "Turning team knowledge into a reusable skill file that any agent session loads on demand, instead of re-briefing every chat from zero.",
+    snapshot: {
+      def: "A folder holding a SKILL.md (name, description, instructions) that an agentic CLI discovers and pulls into context whenever the task matches its description.",
+      why: "Gems live in one person's browser and prompts die with the chat; a skill is versioned with the repo, so the whole team's agents follow the same playbook automatically.",
+      use: "Any rule set you found yourself pasting twice: cleaning playbooks, review conventions, deployment runbooks.",
+      who: "Whoever on the team keeps answering the same questions; leads standardizing how juniors' agents behave.",
+    },
+    story: "All sprint long you kept re-briefing tools with the same rules: the Gem, the EDA prompt, the ETL spec. This exercise makes the re-briefing stop. You fold the playbook into a skill file, commit it, and from now on every agent session in this repo speaks DukaLink rules without being asked. Claude Code reads skills natively; on the free path, the open-source Gemini CLI does the same job with a custom command file.",
+    steps: [
+      ["In the workshop repo, create the folder `.claude/skills/dukalink-cleaning-playbook/` and add a `SKILL.md` (Gemini CLI users: `.gemini/commands/clean.toml` with the same content as the prompt).", "skills live with the code, so git distributes them."],
+      ["Fill the frontmatter: a short `name` and a `description` that states when the skill applies, since the agent decides to load it from the description alone.", "a skill nobody triggers is a skill that does not exist."],
+      ["Paste the playbook rules, output format, and refusal rule into the body from the template (shown right after this step).", "the same testable brief you wrote in Task 1, now versioned."],
+      ["Start a fresh agent session and ask a cleaning question without mentioning the skill: `I have 300 duplicate customer IDs with conflicting emails, what do I do?` Confirm the answer cites rule 6 and escalates.", "loading on demand is the whole point; prove it happens."],
+      ["Ask a question the playbook does not cover (currency conversion, say) and confirm the skill's refusal rule holds.", "a skill that improvises is worse than no skill."],
+      ["Commit the skill folder with a message your team will find, and tell one teammate to pull.", "the moment it is shared, the playbook stops being tribal knowledge."],
+    ],
+    stretch: "Package the code-review conventions as a second skill, then decide deliberately: which knowledge belongs in an on-demand skill, and which in the always-on project instructions (CLAUDE.md or GEMINI.md)? Write one sentence per rule justifying its home.",
+    game: null,
+    prompt: SKILL_TEMPLATE, promptStep: 2, promptLabel: "The SKILL.md template (copy into the skill folder, then adapt)",
   },
 };
 
@@ -501,13 +579,15 @@ const CHECKLIST = [
    `g` groups an optional page under its core task for opt-in gating;
    `offer` names the optional task offered at the foot of that page. */
 const TASK_MS = 15 * 60 * 1000;
+const SPRINT_MS = 45 * 60 * 1000;
 const OFFER_MIN_MS = 3 * 60 * 1000;
-const OPT_GROUP = { t2: "t1", t4: "t3", t6: "t5" };
+const OPT_GROUP = { t2: "t1", t4: "t3", t6: "t5", t7: "g7" };
+/* Which core ticket's clock belongs to each milestone column. */
+const TICKET_BY_MILESTONE = { 1: "t1", 2: "t3", 3: "t5" };
 const PAGES = [
   { id: "welcome", label: "The brief lands", m: 0, type: "welcome" },
   { id: "outcomes", label: "Outcomes and agenda", m: 0, type: "outcomes" },
   { id: "setup", label: "Before the event", m: 0, type: "setup" },
-  { id: "story", label: "Your mission", m: 0, type: "story" },
   { id: "m1", label: "Set the standards", m: 1, type: "milestone" },
   { id: "t1", label: "Task 1: Playbook Gem", m: 1, type: "task", timer: "t1" },
   { id: "t1c", label: "Knowledge check", m: 1, type: "checkpoint", task: "t1", sub: true, timer: "t1", offer: "t2" },
@@ -521,9 +601,11 @@ const PAGES = [
   { id: "t4c", label: "Optional knowledge check", m: 2, type: "checkpoint", task: "t4", hidden: true, g: "t3", timer: "t3" },
   { id: "r2", label: "Milestone 2 recap", m: 2, type: "recap" },
   { id: "m3", label: "Productionize", m: 3, type: "milestone" },
-  { id: "t5", label: "Task 3: Agentic ETL build", m: 3, type: "task", timer: "t5", offer: "t6" },
+  { id: "t5", label: "Task 3: Agentic ETL build", m: 3, type: "task", timer: "t5" },
+  { id: "t5c", label: "Knowledge check", m: 3, type: "checkpoint", task: "t5", sub: true, timer: "t5", offer: "t6" },
   { id: "t6", label: "Optional: Profile, then optimize", m: 3, type: "task", hidden: true, g: "t5", timer: "t5" },
   { id: "t6c", label: "Optional knowledge check", m: 3, type: "checkpoint", task: "t6", hidden: true, g: "t5", timer: "t5" },
+  { id: "t7", label: "Optional: Package the playbook as a skill", m: 3, type: "task", hidden: true, g: "g7" },
   { id: "r3", label: "Milestone 3 recap", m: 3, type: "recap" },
   { id: "checklist", label: "Quality checklist", m: 4, type: "checklist" },
   { id: "finale", label: "Sprint complete", m: 4, type: "finale" },
@@ -538,8 +620,7 @@ const MILESTONES = ["Kickoff", "Milestone 1: Standards", "Milestone 2: Explore",
 const TRANSITIONS = {
   welcome: "First stop: the five problems this sprint exists to solve, and what you will walk out knowing.",
   outcomes: "Knowing the destination is half the trip. The other half is arriving with your tools already working, so sort the setup before the day.",
-  setup: "Accounts ready, files in hand. Step into the office: DukaLink is about to become your Monday.",
-  story: "Three milestones on the board. The first one opens with a marker in your hand, not a keyboard.",
+  setup: "Accounts ready, files in hand. Step into the office: three milestones wait on the board, and the first opens with a marker in your hand, not a keyboard.",
   m1: "The ticket is the foundation of the whole week: the team's cleaning rules, written down at last. Your 15 minutes start when you open it.",
   t1: "The Gem is built and battle-tested. Prove it at the knowledge check: a draft brief arrives broken on all four elements, and the repair is yours.",
   t2: "Reviewer built and fed its first horror. At the knowledge check you sit on the other side of the review: four violations are hiding in nine lines of code.",
@@ -551,8 +632,10 @@ const TRANSITIONS = {
   t4c: "The bluff is called with the right evidence in hand. Time to bank Milestone 2 before production comes calling.",
   r2: "By Thursday the exploration has answered the what: late deliveries and young accounts are where churn lives. But a notebook only you can run is not a deliverable. You close Colab, open VS Code, and pull the final ticket.",
   m3: "The last required ticket hands the keyboard to an agent and keeps the judgment with you. Fifteen minutes: spec, plan, diffs, README.",
+  t5: "The pipeline runs end to end and the README survived a read-aloud. The knowledge check replays the two judgment calls that made it safe.",
   t6: "A few hundred times faster, and provably identical. One question remains: before the profile settled it, where did you think the 100 seconds went? Place the bet.",
   t6c: "That was the last ticket on the board. Time to bank Milestone 3.",
+  t7: "The playbook now travels with the repo: every teammate's agent speaks DukaLink rules from the first prompt. Time to bank Milestone 3.",
   r3: "Friday afternoon. The pipeline runs in under a second and the README survived a neighbour's read-aloud. Before emailing the Head of Growth, you run the sprint through your checklist.",
   checklist: "Every box you can defend is checked. Walk into the finale.",
   finale: "Your highlights have been compiling themselves since the first knowledge check. They are on the next page.",
@@ -822,7 +905,55 @@ function BetBottleneck({ result, setResult }) {
   );
 }
 
-const CHECKPOINTS = { fix: FixTheBrief, spot: SpotViolation, paste: SafeToPaste, bluff: CallTheBluff, bet: BetBottleneck };
+/* Scenario quiz used where a task has no interactive game (Task 3's build
+   happens in the terminal, so the check asks for the supervision calls). */
+function QuizCheck({ result, setResult, taskId }) {
+  const QS = TASKS[taskId].quiz;
+  const [picks, setPicks] = useState((result && result.picks) || {});
+  const done = result != null;
+  const letters = ["a", "b", "c", "d"];
+  const pick = (qi, oi) => {
+    if (done || picks[qi] != null) return;
+    const np = { ...picks, [qi]: oi };
+    setPicks(np);
+    if (Object.keys(np).length === QS.length) {
+      const right = QS.reduce((n, q, i) => n + (np[i] === q.a ? 1 : 0), 0);
+      setResult({ picks: np, right, total: QS.length });
+    }
+  };
+  return (
+    <CheckShell name="Supervise the Build" checks="Two calls you actually made (or dodged) during the build. One pick per question.">
+      {QS.map((q, qi) => {
+        const picked = picks[qi];
+        const answered = picked != null;
+        return (
+          <div key={qi} className="bg-white rounded-xl p-4 my-3">
+            <p className="font-semibold text-slate-800 mb-2 text-sm">Q{qi + 1}. {q.q}</p>
+            <div className="space-y-2">
+              {q.opts.map((o, oi) => {
+                let cls = "border-slate-200 hover:border-teal-600 bg-white";
+                if (answered && oi === q.a) cls = "border-teal-600 bg-teal-50";
+                else if (answered && picked === oi) cls = "border-red-300 bg-red-50";
+                else if (answered) cls = "border-slate-200 bg-white opacity-60";
+                return (
+                  <button key={oi} disabled={answered} onClick={() => pick(qi, oi)}
+                    className={`w-full text-left px-4 py-2.5 rounded-xl border text-sm transition-colors ${cls}`}>
+                    <span className="font-mono font-bold text-teal-800 mr-2">{letters[oi]})</span>{o}
+                    {answered && oi === q.a && <span className="ml-2 text-teal-700 font-semibold">correct</span>}
+                  </button>
+                );
+              })}
+            </div>
+            {answered && <p className="mt-2 text-sm text-slate-600 bg-slate-50 rounded-lg px-3 py-2">{q.ex}</p>}
+          </div>
+        );
+      })}
+      {done && <p className="font-semibold text-slate-800 mt-2">{result.right} of {result.total} supervision calls right.</p>}
+    </CheckShell>
+  );
+}
+
+const CHECKPOINTS = { fix: FixTheBrief, spot: SpotViolation, paste: SafeToPaste, bluff: CallTheBluff, bet: BetBottleneck, quiz: QuizCheck };
 
 /* ---------------- performance scoring ----------------
    Normalize each knowledge-check game's result shape to a 0..1 score.
@@ -833,6 +964,7 @@ const CP_SCORE = {
   spot: (r) => ({ pct: r.hits / 4, note: `${r.hits} of 4 violations caught${r.misses ? `, ${r.misses} false flag${r.misses === 1 ? "" : "s"}` : ""}` }),
   paste: (r) => ({ pct: r / 6, note: `${r} of 6 governance calls right` }),
   bluff: (r) => ({ pct: r ? 1 : 0, note: r ? "Called the bluff with the right evidence" : "Called the bluff, wrong evidence cell" }),
+  quiz: (r) => ({ pct: r.right / r.total, note: `${r.right} of ${r.total} supervision calls right` }),
 };
 
 const SKILL_NAMES = {
@@ -840,6 +972,7 @@ const SKILL_NAMES = {
   t2: "Enforcing code conventions on AI output",
   t3: "Prompt-time data governance",
   t4: "Verifying AI claims against the numbers",
+  t5: "Supervising an agentic build",
   t6: "Profiling before optimizing",
 };
 
@@ -958,8 +1091,10 @@ function CheckpointPage({ taskId, state, setState, celebrate }) {
           <h2 className="text-2xl font-bold text-slate-800 tracking-tight">Knowledge check: {T.gameName}</h2>
         </div>
       </div>
-      <p className="text-sm text-slate-600 mb-3">No multiple choice here; prove the skill by playing it.</p>
-      <Comp result={state.games[taskId]} setResult={setResult} />
+      <div className="rounded-xl border border-teal-100 bg-white p-4 mb-4 text-sm text-slate-700 leading-relaxed">
+        <span className="font-bold text-teal-800">How this check works: </span>{T.how}
+      </div>
+      <Comp result={state.games[taskId]} setResult={setResult} taskId={taskId} />
     </div>
   );
 }
@@ -1065,15 +1200,19 @@ export default function App() {
 
   useEffect(() => {
     (async () => {
-      const saved = await store.get("sprint-progress-v2");
+      const saved = await store.get("sprint-progress-v3");
       if (saved) { setState(s => ({ ...s, ...saved.state })); setPage(Math.min(saved.page || 0, PAGES.length - 1)); }
       setLoaded(true);
     })();
   }, []);
-  useEffect(() => { if (loaded) store.set("sprint-progress-v2", { page, state }); }, [page, state, loaded]);
+  useEffect(() => { if (loaded) store.set("sprint-progress-v3", { page, state }); }, [page, state, loaded]);
 
-  /* The 15-minute ticket clock starts the first time its core task page opens. */
+  /* The 45-minute sprint clock starts the moment the learner leaves page one;
+     each 15-minute ticket clock starts the first time its core task page opens. */
   useEffect(() => {
+    if (loaded && page > 0 && !state.sprintStart) {
+      setState(s => ({ ...s, sprintStart: Date.now() }));
+    }
     const p = PAGES[page];
     if (loaded && p.type === "task" && !p.hidden && p.timer && !(state.taskStart || {})[p.timer]) {
       setState(s => ({ ...s, taskStart: { ...s.taskStart, [p.timer]: Date.now() } }));
@@ -1134,7 +1273,9 @@ export default function App() {
             </div>
           </div>
           <Story>Monday morning. The Head of Growth stops at your desk: retailer churn is up 18 percent quarter on quarter and nobody knows why. You have a 45-minute sprint: three required tasks, 15 minutes each, one per milestone. The story you are stepping into compresses a week at DukaLink into those 45 minutes, and it is the project you have been waiting for: real stakes, real data, and every part of it matching something one of three AI tools claims to do.</Story>
-          <p className="text-slate-700 text-sm leading-relaxed">You are the data scientist at DukaLink, a Nairobi e-commerce marketplace, proving three tools on live work: <b>Gemini Gems</b> to set the standards, <b>Gemini on Colab</b> to explore safely, and <b>Claude Code</b> (or any agentic CLI) to productionize. Each tool gets one required 15-minute task, with a ticket clock at the top right keeping you honest. Finish a task with time to spare and you will be offered an optional extra exercise; decline, or run out of clock, and the lesson simply moves on. Most tasks end with an interactive knowledge check, a small game instead of a quiz.</p>
+          <p className="text-slate-700 text-sm leading-relaxed">You are the data scientist at DukaLink, a Nairobi e-commerce marketplace, proving three tools on live work: <b>Gemini Gems</b> to set the standards, <b>Gemini on Colab</b> to explore safely, and <b>Claude Code</b> (or any agentic CLI) to productionize. Each tool gets one required 15-minute task, with a ticket clock at the top right keeping you honest. Finish a task with time to spare and you will be offered an optional extra exercise; decline, or run out of clock, and the lesson simply moves on. Every task ends with an interactive knowledge check.</p>
+          <p className="text-sm text-slate-700 leading-relaxed mt-3">Your required brief, one deliverable per 15-minute ticket: a Cleaning Playbook Gem the whole team can reuse (Task 1), a privacy-safe EDA that records its cleaning decisions (Task 2), and a production ETL pipeline with a README (Task 3). Close a ticket with time to spare and an optional extra exercise is offered on the spot: a Code Review Gem, a verified model interpretation, or a measured optimization. The extras are exactly that, extras; nobody is behind for never seeing them.</p>
+          <Story>You sketch three milestones on your board: set the standards, explore safely, productionize. Each holds one required ticket, and a bonus one that only appears if you beat the clock. If the tools are worth adopting, they will earn it here. Standards first, then speed.</Story>
           <div className="mt-6 rounded-2xl border border-teal-100 bg-white p-5 max-w-md">
             <div className="font-bold text-slate-800 text-sm">Who is running this sprint?</div>
             <p className="text-xs text-slate-500 mt-1 mb-3">Your knowledge-check results are tracked on this device only and distilled into your top three highlights at the end of the sprint.</p>
@@ -1150,6 +1291,7 @@ export default function App() {
         <div>
           <Eyebrow>Learning outcomes</Eyebrow>
           <h2 className="text-2xl font-bold text-slate-800 tracking-tight mb-3">Five problems every data team recognises</h2>
+          <p className="text-sm text-slate-600 mb-3">Every exercise in this sprint exists because one of these five problems keeps showing up in real data teams. Here is each problem, and what you will be able to do about it by the end of the session.</p>
           {[
             ["Inconsistent cleaning decisions", "encode team rules into a Playbook Gem with role, constraints, output format, refusal rules"],
             ["Unreviewed AI-generated code", "a Code Review Gem that enforces your conventions before code reaches a repo"],
@@ -1167,8 +1309,14 @@ export default function App() {
       case "setup": return (
         <div>
           <Eyebrow>Complete before the event</Eyebrow>
-          <h2 className="text-2xl font-bold text-slate-800 tracking-tight mb-3">Set up before the event</h2>
-          <p className="text-sm text-slate-600 mb-4">There is no setup time in the session; the first task begins a few minutes in.</p>
+          <div className="flex items-center gap-3 mb-3 flex-wrap">
+            <h2 className="text-2xl font-bold text-slate-800 tracking-tight">Set up before the event</h2>
+            <a href={RES("setup_instructions.pdf")} download title="Download these setup instructions as a PDF"
+              className="hover-lift inline-flex items-center gap-1.5 text-xs font-mono font-semibold px-2.5 py-1 rounded-lg border border-teal-200 bg-white text-teal-800 hover:bg-teal-50 transition-colors">
+              <span aria-hidden>{"↓"}</span>PDF
+            </a>
+          </div>
+          <p className="text-sm text-slate-600 mb-4">There is no setup time in the session; the first task begins a few minutes in. The small PDF beside the title carries everything on this page, for forwarding to attendees.</p>
           <div className="mb-3"><div className="font-bold text-teal-800 text-sm">Accounts</div>
             <div className="text-sm text-slate-700 leading-relaxed">A Google account with Gemini and Gems, plus Colab with Gemini enabled. A Claude account (Pro or Team) with Claude Code in VS Code. No Claude subscription? Gemini CLI is free with a personal Google account: {fmt("`npm install -g @google/gemini-cli`")}, then run {fmt("`gemini`")} in the project folder. Milestone 3 works with any agentic coding tool.</div></div>
           <div className="mb-3"><div className="font-bold text-teal-800 text-sm">Software</div>
@@ -1182,24 +1330,6 @@ export default function App() {
             <div className="text-xs text-slate-500 mt-2">5,150 retailers and 76,503 reconciling orders, the starter and model notebooks, two workplace prompts, the flawed snippet, and the 100-second pipeline.</div></div>
         </div>
       );
-      case "story": {
-        return (
-          <div>
-            <Eyebrow>Your mission</Eyebrow>
-            <h2 className="text-2xl font-bold text-slate-800 tracking-tight">Welcome, {who}</h2>
-            <div className="flex items-center gap-4 rounded-2xl p-4 my-4" style={{ background: MINT }}>
-              <PersonaBust size={72} />
-              <div>
-                <div className="font-bold text-slate-800">{who}</div>
-                <div className="text-sm text-teal-700 font-semibold">Data Scientist, DukaLink, Nairobi</div>
-                <div className="text-xs text-slate-500">Months of reading about AI workflows. Zero of it proven on real work. Until Monday.</div>
-              </div>
-            </div>
-            <p className="text-sm text-slate-700 leading-relaxed">Your required brief, one deliverable per 15-minute ticket: a Cleaning Playbook Gem the whole team can reuse (Task 1), a privacy-safe EDA that records its cleaning decisions (Task 2), and a production ETL pipeline with a README (Task 3). Close a ticket with time to spare and an optional extra exercise is offered on the spot: a Code Review Gem, a verified model interpretation, or a measured optimization. The extras are exactly that, extras; nobody is behind for never seeing them.</p>
-            <Story>You sketch three milestones on your board: set the standards, explore safely, productionize. Each holds one required ticket, and a bonus one that only appears if you beat the clock. If the tools are worth adopting, they will earn it here. Standards first, then speed.</Story>
-          </div>
-        );
-      }
       case "milestone": {
         if (pg.id === "m1") return <MilestoneIntro n={1} title="Set the Standards (Gemini Gems)" prop={<GemProp />}
           scene={`Monday, ${who}. You resist the urge to open the CSV and pick up a marker instead: the team's tribal knowledge is about to become written, testable standards.`}
@@ -1323,6 +1453,12 @@ export default function App() {
     }
   };
 
+  /* The active ticket's clock follows the learner across every page of its
+     milestone (task, checks, optional pages, recap) and never stops counting. */
+  const activeTid = PAGES[page].timer || TICKET_BY_MILESTONE[PAGES[page].m] || null;
+  const activeRem = activeTid ? remainingFor(activeTid) : null;
+  const hideNav = () => { setNavOpen(false); setNavCollapsed(true); };
+
   return (
     <div className="min-h-screen bg-slate-50 text-slate-800" style={{ fontFamily: "ui-sans-serif, system-ui, sans-serif" }}>
       <header className="no-print sticky top-0 z-20 bg-white border-b border-slate-200">
@@ -1333,17 +1469,25 @@ export default function App() {
           <div className="font-mono text-xs text-slate-400 hidden sm:block">DukaLink sprint</div>
           <a href={RES("workshop_files.zip")} download className="hidden sm:inline text-xs font-semibold text-teal-700 hover:underline">Workshop files</a>
           <div className="ml-auto flex items-center gap-2">
-            {(() => {
-              const tid = PAGES[page].timer;
-              const rem = tid ? remainingFor(tid) : null;
-              if (rem == null) return null;
-              const expired = rem <= 0;
+            {state.sprintStart && (() => {
+              const rem = SPRINT_MS - (now - state.sprintStart);
+              const over = rem <= 0;
               const mm = Math.floor(Math.max(0, rem) / 60000), ss = Math.floor((Math.max(0, rem) % 60000) / 1000);
               return (
-                <span data-testid="ticket-clock" title="Time budgeted for this ticket"
-                  className={`font-mono text-xs font-bold px-2.5 py-1 rounded-full border ${expired ? "bg-red-50 text-red-500 border-red-200" : rem < OFFER_MIN_MS ? "text-white border-transparent" : "bg-white border-teal-200 text-teal-800"}`}
-                  style={expired ? {} : rem < OFFER_MIN_MS ? { background: CORAL } : {}}>
-                  {expired ? "time up" : `${mm}:${String(ss).padStart(2, "0")}`}
+                <span data-testid="sprint-clock" title="Time remaining in the 45-minute sprint"
+                  className={`font-mono text-xs px-2.5 py-1 rounded-full border ${over ? "bg-red-50 text-red-500 border-red-200" : "bg-white border-slate-200 text-slate-600"}`}>
+                  sprint {over ? "over" : `${mm}:${String(ss).padStart(2, "0")}`}
+                </span>
+              );
+            })()}
+            {activeRem != null && (() => {
+              const expired = activeRem <= 0;
+              const mm = Math.floor(Math.max(0, activeRem) / 60000), ss = Math.floor((Math.max(0, activeRem) % 60000) / 1000);
+              return (
+                <span data-testid="ticket-clock" title={`Time budgeted for ${TASKS[activeTid].title}`}
+                  className={`font-mono text-xs font-bold px-2.5 py-1 rounded-full border ${expired ? "bg-red-50 text-red-500 border-red-200" : activeRem < OFFER_MIN_MS ? "text-white border-transparent" : "bg-white border-teal-200 text-teal-800"}`}
+                  style={expired ? {} : activeRem < OFFER_MIN_MS ? { background: CORAL } : {}}>
+                  ticket {expired ? "0:00" : `${mm}:${String(ss).padStart(2, "0")}`}
                 </span>
               );
             })()}
@@ -1353,10 +1497,15 @@ export default function App() {
             </div>
           </div>
         </div>
+        {activeRem != null && activeRem <= 0 && (
+          <div data-testid="overtime-alert" className="px-4 py-2 text-xs font-semibold text-red-600 bg-red-50 border-t border-red-100">
+            The 15 minutes for Task {TASKS[activeTid].num} are up. Wrap up and move on; anything unfinished waits on the Further practice page.
+          </div>
+        )}
       </header>
 
       <div className="flex max-w-6xl mx-auto">
-        <nav className={`${navOpen ? "block" : "hidden"} ${navCollapsed ? "md:hidden" : "md:block"} no-print w-64 shrink-0 border-r border-slate-200 bg-white md:bg-transparent absolute md:static z-10 md:z-auto h-full md:h-auto overflow-y-auto`}>
+        <nav className={`${navOpen ? "translate-x-0" : "-translate-x-full"} ${navCollapsed ? "md:-translate-x-full md:-ml-64" : "md:translate-x-0 md:ml-0"} transition-all duration-300 no-print w-64 shrink-0 border-r border-slate-200 bg-white md:bg-transparent absolute md:static z-10 md:z-auto h-full md:h-auto overflow-y-auto`}>
           <div className="p-4 space-y-4">
             {MILESTONES.map((m, mi) => (
               <div key={mi}>
@@ -1376,7 +1525,8 @@ export default function App() {
           </div>
         </nav>
 
-        <main ref={mainRef} className="flex-1 min-w-0 p-4 sm:p-8">
+        <main ref={mainRef} className="flex-1 min-w-0 p-4 sm:p-8"
+          onClickCapture={hideNav} onTouchStartCapture={hideNav} onWheelCapture={hideNav}>
           {burst > 0 && <Confetti key={burst} />}
           <div key={page} className="page-enter">
             <Card className="min-h-[60vh]">

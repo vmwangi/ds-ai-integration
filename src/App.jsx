@@ -1,9 +1,11 @@
 import React, { useState, useEffect, useRef } from "react";
 
-/* From Brief to Production: interactive companion app (v3, GitHub Pages ready)
+/* From Brief to Production: interactive companion app (v4, GitHub Pages ready)
    Palette: teal #0F766E, coral #E8604C, slate #1E293B, mint #E7F4F2
-   Progress, knowledge-check answers, and checkpoint results persist in
-   localStorage and feed the performance report at the end of the sprint. */
+   Three required 15-minute tasks with a visible ticket clock; optional
+   exercises are offered on finishing early and never appear in the nav.
+   Progress, knowledge-check results, opt-ins, and clocks persist in
+   localStorage and feed the top-3 highlights at the end of the sprint. */
 
 const CORAL = "#E8604C";
 const CORAL_SOFT = "#FBEAE6";
@@ -332,12 +334,8 @@ const TASKS = {
       ["Test with three questions, including one built to force an escalation: `I have 200 duplicate customer IDs with conflicting phone numbers. What do I do?`", "instructions are done when you fail to break them."],
     ],
     stretch: "Add a rule your real team argues about (timezones, currency codes, negative quantities) as a testable constraint, then write a question where two rules conflict and see whether the Gem states a precedence or improvises one.",
-    mcqs: [
-      { q: "Your Playbook Gem is asked about a situation the rules do not cover. A well-briefed Gem should:", opts: ["Improvise from general best practice", "State that the playbook does not cover it", "Silently apply the industry default", "Refuse all further questions"], a: 1, ex: "A well-briefed Gem states its gaps rather than improvising a rule the team never agreed." },
-      { q: "You find 150 duplicate customer IDs with conflicting values. Per the playbook, you:", opts: ["Keep the most recent record", "Average the conflicting values", "Escalate for human resolution", "Drop all affected rows"], a: 2, ex: "Conflicting duplicates carry a business decision, so the playbook escalates rather than auto-resolves." },
-    ],
     game: "fix", gameName: "Fix the Brief",
-    prompt: GEM_PLAYBOOK_PROMPT, promptLabel: "The full Gem brief (copy into the Gem builder, then adapt to your team)",
+    prompt: GEM_PLAYBOOK_PROMPT, promptStep: 5, promptLabel: "The full brief these steps assemble (copy into the Gem builder, then adapt to your team)",
   },
   t2: {
     num: 2, time: "20 min", required: false, title: "The Code Review Gem", tool: "Gemini Gems",
@@ -358,15 +356,11 @@ const TASKS = {
       ["Keep the Gem open in a tab; it audits the agent's code in Milestone 3.", "the tools chain."],
     ],
     stretch: "Give the Gem a severity policy (block on High, warn on Medium), then feed it a clean-looking snippet with target leakage. Style conventions will not catch a logic error, and articulating why is the point.",
-    mcqs: [
-      { q: "What makes a conventions-loaded review Gem better than a generic 'review my code' chat?", opts: ["It reviews against your team's standards, not general advice", "It can execute the code", "It responds faster", "It guarantees bug-free code"], a: 0, ex: "The whole value is enforcing your standards, not the internet's." },
-      { q: "The Gem flags nothing on a snippet you know is flawed. Best next step:", opts: ["Assume the code is fine", "Ask the Gem to try harder", "Rewrite from scratch", "Check whether the convention is in the Gem's instructions, then add it"], a: 3, ex: "A Gem can only enforce conventions in its brief; the gap is in the brief, not the code." },
-    ],
     game: "spot", gameName: "Spot the Violation", files: ["flawed_snippet.py"],
-    prompt: GEM_REVIEWER_PROMPT, promptLabel: "The full Code Reviewer Gem brief (copy into the Gem builder, then adapt)",
+    prompt: GEM_REVIEWER_PROMPT, promptStep: 3, promptLabel: "The full Code Reviewer brief these steps assemble (copy into the Gem builder, then adapt)",
   },
   t3: {
-    num: 3, time: "15 min", required: true, title: "The Privacy-First EDA Scaffold", tool: "Gemini on Colab",
+    num: 2, time: "15 min", required: true, title: "The Privacy-First EDA Scaffold", tool: "Gemini on Colab",
     concept: "Pseudonymization habits plus a full EDA scaffold (distributions, correlations, missingness) from one well-contexted prompt.",
     snapshot: {
       def: "Pseudonymize identifiers and fix what may never enter a prompt before prompting at all, then one contexted prompt produces the whole scaffold.",
@@ -378,16 +372,12 @@ const TASKS = {
     steps: [
       ["Upload the two CSVs to Colab, open `colab_starter.ipynb`, and run its cell: it drops `national_id`, hashes `phone_number`, and prints `df.info()` and `df.describe(include=\"all\")`.", "pseudonymize first; hashing keeps IDs matchable against payment logs without staying readable."],
       ["Add a markdown rule cell at the top: `Prompts may contain schema, dtypes, aggregate stats, and synthetic examples. Prompts may never contain raw rows with PII. Hashed columns are pseudonymized, not anonymous, and stay in scope.`", "a visible rule outlives good intentions."],
-      ["Open `prompts/eda_prompt.txt` (shown in full below), paste your real structural output into its CONTEXT section, and adjust the Notes to what you actually see.", "workplace prompts carry business context, caveats, and constraints."],
+      ["Open `prompts/eda_prompt.txt` (shown in full right after this step), paste your real structural output into its CONTEXT section, and adjust the Notes to what you actually see.", "workplace prompts carry business context, caveats, and constraints."],
       ["Run the generated cells one by one; paste any full traceback straight back to Gemini instead of fixing it by hand.", "the error message is the best prompt you did not write."],
       ["Read the missingness summary against your Playbook Gem and record, in a markdown cell, the cleaning decisions for Milestone 3.", "exploration hands production a to-do list."],
     ],
     stretch: "Survive the signup_date parsing and mixed-dtype trap with zero traceback rounds, purely by enriching the prompt's Notes. Then extend to class-conditional EDA: every numeric distribution split by churned vs retained with a one-line takeaway.",
-    mcqs: [
-      { q: "The dataframe contains PII. Safe prompt context is:", opts: ["df.head()", "A random sample of ten rows", "The full CSV in an enterprise tool", "df.info() and df.describe() output"], a: 3, ex: "Structural summaries carry full context and zero personal data." },
-      { q: "Gemini writes EDA code referencing columns your dataframe does not have. Most likely cause:", opts: ["A Colab bug", "The prompt lacked the real structure, so the model guessed a dataset", "A seaborn version mismatch", "The dataset is too large"], a: 1, ex: "Without df.info() in the prompt, the model invents a plausible dataset; structure pins the code to yours." },
-    ],
-    game: "paste", gameName: "Safe to Paste?", files: ["colab_starter.ipynb", "dukalink_customers.csv", "dukalink_orders.csv", "prompts/eda_prompt.txt"], prompt: EDA_PROMPT, promptLabel: "The workplace EDA prompt (shipped as prompts/eda_prompt.txt; adapt, do not retype)",
+    game: "paste", gameName: "Safe to Paste?", files: ["colab_starter.ipynb", "dukalink_customers.csv", "dukalink_orders.csv", "prompts/eda_prompt.txt"], prompt: EDA_PROMPT, promptStep: 2, promptLabel: "The workplace EDA prompt (shipped as prompts/eda_prompt.txt; adapt, do not retype)",
   },
   t4: {
     num: 4, time: "30 min", required: false, title: "Interpreting the Model, Not Just Training It", tool: "Gemini on Colab",
@@ -407,15 +397,11 @@ const TASKS = {
       ["Verify each claim against the numbers; record one caveat the AI did not volunteer. One is planted in these outputs.", "the caveat you find is the one stakeholders needed."],
     ],
     stretch: "Two directions. Cost-optimal threshold: a retention offer costs KES 1,500 and a saved churner is worth KES 40,000; ask for the profit-optimal threshold, then verify by sweeping thresholds yourself. And: run the provided modeling code past your own Playbook Gem. One line quietly violates a rule your team wrote this morning.",
-    mcqs: [
-      { q: "80 percent of customers retained; the model reports 83 percent accuracy. Best reaction:", opts: ["Ship it", "Check churn-class recall, since accuracy barely beats the majority baseline", "Retrain with more trees", "Remove retained customers from the test set"], a: 1, ex: "Predicting nobody churns already scores 80; churn recall (0.33) is the real test." },
-      { q: "The AI calls one SHAP feature 'the dominant driver.' Before repeating it:", opts: ["Ask the AI if it is sure", "Accept it, SHAP is objective", "Check the actual SHAP magnitudes", "Re-run without the feature"], a: 2, ex: "Confidence is not evidence; the magnitudes either support 'dominant' or they do not." },
-    ],
     game: "bluff", gameName: "Call the Bluff", files: ["baseline_model.ipynb"],
-    prompt: INTERPRET_PROMPT, promptLabel: "The workplace interpretation prompt (paste your real outputs into it)",
+    prompt: INTERPRET_PROMPT, promptStep: 1, promptLabel: "The workplace interpretation prompt (paste your real outputs into it)",
   },
   t5: {
-    num: 5, time: "15 min", required: true, title: "The Self-Correcting ETL Build", tool: "Claude Code / agentic CLI",
+    num: 3, time: "15 min", required: true, title: "The Self-Correcting ETL Build", tool: "Claude Code / agentic CLI",
     concept: "An agent writes, runs, and fixes an ETL script from your spec, under plan and diff review, closed with a README from the real code.",
     snapshot: {
       def: "A written spec drives an execute-and-fix loop; you review the plan up front and every diff along the way.",
@@ -423,21 +409,17 @@ const TASKS = {
       use: "Monthly refreshes, feature pipelines, migration scripts.",
       who: "Data and analytics engineers owning pipelines, ML engineers productionizing features, data scientists done babysitting notebooks.",
     },
-    story: "The early discipline pays off: the spec quotes the Playbook Gem verbatim plus the Task 3 decisions. You adjust one step of the plan, watch a real traceback get fixed, review every diff, then ask for a README that flags any drift from the playbook. It finds one.",
+    story: "The early discipline pays off: the spec quotes the Playbook Gem verbatim plus the Task 2 decisions. You adjust one step of the plan, watch a real traceback get fixed, review every diff, then ask for a README that flags any drift from the playbook. It finds one.",
     steps: [
       ["Open the workshop folder in VS Code and start Claude Code, or run `gemini` in the folder if you are on the free Gemini CLI.", "give the agent the real project."],
-      ["Adapt `prompts/etl_spec_prompt.txt` (shown in full below): paste both schemas, replace the cleaning rules with the verbatim text from your own Playbook Gem plus your Task 3 decisions.", "a workplace spec names inputs, rules, failure behaviour, non-goals, and done."],
+      ["Adapt `prompts/etl_spec_prompt.txt` (shown in full right after this step): paste both schemas, replace the cleaning rules with the verbatim text from your own Playbook Gem plus your Task 2 decisions.", "a workplace spec names inputs, rules, failure behaviour, non-goals, and done."],
       ["End the spec with: `Give me your plan first as numbered steps. Do not write any code until I confirm the plan.` Then adjust or reject at least one step, stating why.", "the plan is your cheapest intervention point."],
       ["Approve the build; review each diff in the execute-and-fix loop before accepting it.", "acceptance without reading is the real risk."],
       ["Run `python etl.py` yourself end to end and commit with a meaningful message.", "if you cannot run it, it is not done."],
       ["Flex: request the README with the added instruction `Flag any place where the code and the cleaning playbook disagree.` Reconcile the drift, then a neighbour reads the README aloud and follows it while you stay silent.", "docs from real code catch drift; a walkthrough catches what the docs missed."],
     ],
     stretch: "Extend the spec with a pandera or Great Expectations validation module, make the pipeline idempotent on partial re-runs, and parameterize the refresh month for backfills. Keep plan-first discipline for every addition.",
-    mcqs: [
-      { q: "The agent proposes a plan for etl.py. Your best first move:", opts: ["Read it and adjust or reject any step that conflicts with the spec", "Approve immediately, plans cost nothing", "Skip the plan, ask for code", "Ask for three alternative plans"], a: 0, ex: "The plan is the cheapest point to intervene; reviewing it is the supervision the workflow depends on." },
-      { q: "Why instruct the README generator to flag code-playbook disagreements?", opts: ["Longer README", "Documents the agent's reasoning", "Satisfies audits automatically", "It catches rule drift introduced during the fix loop"], a: 3, ex: "Fix loops quietly move thresholds; a code-aware doc pass surfaces the drift." },
-    ],
-    game: null, files: ["prompts/etl_spec_prompt.txt", "dukalink_customers.csv", "dukalink_orders.csv"], prompt: ETL_PROMPT, promptLabel: "The workplace ETL spec (shipped as prompts/etl_spec_prompt.txt; adapt, do not retype)",
+    game: null, files: ["prompts/etl_spec_prompt.txt", "dukalink_customers.csv", "dukalink_orders.csv"], prompt: ETL_PROMPT, promptStep: 1, promptLabel: "The workplace ETL spec (shipped as prompts/etl_spec_prompt.txt; adapt, do not retype)",
   },
   t6: {
     num: 6, time: "25 min", required: false, title: "Profile, Then Optimize", tool: "Claude Code / agentic CLI",
@@ -454,15 +436,11 @@ const TASKS = {
       ["Ask the agent: `Profile slow_pipeline.py and report the top three time sinks before changing anything.`", "measure before touching anything."],
       ["Compare the profile to your guess.", "noticing you guessed wrong is the lesson."],
       ["Request the rewrite with two constraints: `output must be identical to the original (write the comparison check yourself)` and `the diff must be reviewable function by function`.", "fast but different output is a silent failure."],
-      ["Record before and after timings, then run the result through the Code Review Gem from Task 2.", "your own standards get the final word."],
+      ["Record before and after timings, then run the result through the Code Review Gem if you built the optional reviewer, or paste it back with your conventions listed.", "your own standards get the final word."],
     ],
     stretch: "Race the machine: write your own optimized version first, verify both against the original, compare timings. Then port the winner to polars and prove equivalence across libraries, not just versions.",
-    mcqs: [
-      { q: "Why must profiling come before optimization?", opts: ["pandas requires it", "It warms the cache", "Intuition about hotspots is unreliable; effort goes where time actually is", "Profilers suggest the fixes"], a: 2, ex: "Your wrong guess about the CSV read is the proof: optimize where the time actually goes." },
-      { q: "The rewrite runs a few hundred times faster. Before celebrating:", opts: ["Commit before the timing changes", "Confirm its output is identical to the original's", "Ask for 1,000 times faster", "Delete the slow version"], a: 1, ex: "A faster pipeline with different output is a silent failure; equivalence comes before celebration." },
-    ],
     game: "bet", gameName: "Bet on the Bottleneck", files: ["slow_pipeline.py", "dukalink_orders.csv"],
-    prompt: OPTIMIZE_PROMPT, promptLabel: "The workplace profile-then-optimize prompt (adapt, do not retype)",
+    prompt: OPTIMIZE_PROMPT, promptStep: 1, promptLabel: "The workplace profile-then-optimize prompt (adapt, do not retype)",
   },
 };
 
@@ -516,41 +494,70 @@ const CHECKLIST = [
   "The final code passed the Code Review Gem with no high-severity issues",
 ];
 
-/* ---------------- pages ---------------- */
+/* ---------------- pages ----------------
+   Hidden pages are the optional exercises: never in the left nav, reached only
+   through the offer that appears once the matching core task is finished.
+   `timer` names the core task whose 15-minute clock is shown on that page;
+   `g` groups an optional page under its core task for opt-in gating;
+   `offer` names the optional task offered at the foot of that page. */
+const TASK_MS = 15 * 60 * 1000;
+const OFFER_MIN_MS = 3 * 60 * 1000;
+const OPT_GROUP = { t2: "t1", t4: "t3", t6: "t5" };
 const PAGES = [
   { id: "welcome", label: "The brief lands", m: 0, type: "welcome" },
   { id: "outcomes", label: "Outcomes and agenda", m: 0, type: "outcomes" },
   { id: "setup", label: "Before the event", m: 0, type: "setup" },
   { id: "story", label: "Your mission", m: 0, type: "story" },
   { id: "m1", label: "Set the standards", m: 1, type: "milestone" },
-  { id: "t1", label: "Task 1: Playbook Gem", m: 1, type: "task" },
-  { id: "t1k", label: "Knowledge check", m: 1, type: "kcheck", task: "t1", sub: true },
-  { id: "t1c", label: "Checkpoint", m: 1, type: "checkpoint", task: "t1", sub: true },
-  { id: "t2", label: "Task 2: Code Review Gem", m: 1, type: "task" },
-  { id: "t2k", label: "Knowledge check", m: 1, type: "kcheck", task: "t2", sub: true },
-  { id: "t2c", label: "Checkpoint", m: 1, type: "checkpoint", task: "t2", sub: true },
+  { id: "t1", label: "Task 1: Playbook Gem", m: 1, type: "task", timer: "t1" },
+  { id: "t1c", label: "Knowledge check", m: 1, type: "checkpoint", task: "t1", sub: true, timer: "t1", offer: "t2" },
+  { id: "t2", label: "Optional: Code Review Gem", m: 1, type: "task", hidden: true, g: "t1", timer: "t1" },
+  { id: "t2c", label: "Optional knowledge check", m: 1, type: "checkpoint", task: "t2", hidden: true, g: "t1", timer: "t1" },
   { id: "r1", label: "Milestone 1 recap", m: 1, type: "recap" },
   { id: "m2", label: "Explore safely", m: 2, type: "milestone" },
-  { id: "t3", label: "Task 3: Privacy-first EDA", m: 2, type: "task" },
-  { id: "t3k", label: "Knowledge check", m: 2, type: "kcheck", task: "t3", sub: true },
-  { id: "t3c", label: "Checkpoint", m: 2, type: "checkpoint", task: "t3", sub: true },
-  { id: "t4", label: "Task 4: Interpret the model", m: 2, type: "task" },
-  { id: "t4k", label: "Knowledge check", m: 2, type: "kcheck", task: "t4", sub: true },
-  { id: "t4c", label: "Checkpoint", m: 2, type: "checkpoint", task: "t4", sub: true },
+  { id: "t3", label: "Task 2: Privacy-first EDA", m: 2, type: "task", timer: "t3" },
+  { id: "t3c", label: "Knowledge check", m: 2, type: "checkpoint", task: "t3", sub: true, timer: "t3", offer: "t4" },
+  { id: "t4", label: "Optional: Interpret the model", m: 2, type: "task", hidden: true, g: "t3", timer: "t3" },
+  { id: "t4c", label: "Optional knowledge check", m: 2, type: "checkpoint", task: "t4", hidden: true, g: "t3", timer: "t3" },
   { id: "r2", label: "Milestone 2 recap", m: 2, type: "recap" },
   { id: "m3", label: "Productionize", m: 3, type: "milestone" },
-  { id: "t5", label: "Task 5: Agentic ETL build", m: 3, type: "task" },
-  { id: "t5k", label: "Knowledge check", m: 3, type: "kcheck", task: "t5", sub: true },
-  { id: "t6", label: "Task 6: Profile, then optimize", m: 3, type: "task" },
-  { id: "t6k", label: "Knowledge check", m: 3, type: "kcheck", task: "t6", sub: true },
-  { id: "t6c", label: "Checkpoint", m: 3, type: "checkpoint", task: "t6", sub: true },
+  { id: "t5", label: "Task 3: Agentic ETL build", m: 3, type: "task", timer: "t5", offer: "t6" },
+  { id: "t6", label: "Optional: Profile, then optimize", m: 3, type: "task", hidden: true, g: "t5", timer: "t5" },
+  { id: "t6c", label: "Optional knowledge check", m: 3, type: "checkpoint", task: "t6", hidden: true, g: "t5", timer: "t5" },
   { id: "r3", label: "Milestone 3 recap", m: 3, type: "recap" },
   { id: "checklist", label: "Quality checklist", m: 4, type: "checklist" },
   { id: "finale", label: "Sprint complete", m: 4, type: "finale" },
-  { id: "report", label: "Performance report", m: 4, type: "report" },
+  { id: "report", label: "Performance highlights", m: 4, type: "report" },
   { id: "further", label: "Further practice", m: 4, type: "further" },
 ];
 const MILESTONES = ["Kickoff", "Milestone 1: Standards", "Milestone 2: Explore", "Milestone 3: Production", "Close"];
+
+/* ---------------- page-to-page transitions (rendered at the foot of each page) ----------------
+   Pages carrying the optional-exercise offer (t1c, t3c, t5) have no entry here:
+   the offer itself is the bridge to whatever comes next. */
+const TRANSITIONS = {
+  welcome: "First stop: the five problems this sprint exists to solve, and what you will walk out knowing.",
+  outcomes: "Knowing the destination is half the trip. The other half is arriving with your tools already working, so sort the setup before the day.",
+  setup: "Accounts ready, files in hand. Step into the office: DukaLink is about to become your Monday.",
+  story: "Three milestones on the board. The first one opens with a marker in your hand, not a keyboard.",
+  m1: "The ticket is the foundation of the whole week: the team's cleaning rules, written down at last. Your 15 minutes start when you open it.",
+  t1: "The Gem is built and battle-tested. Prove it at the knowledge check: a draft brief arrives broken on all four elements, and the repair is yours.",
+  t2: "Reviewer built and fed its first horror. At the knowledge check you sit on the other side of the review: four violations are hiding in nine lines of code.",
+  t2c: "Extra credit banked, and the reviewer will keep earning its keep all sprint. Time to gather what Milestone 1 taught.",
+  r1: "Standards set, you finally open the data. Tuesday morning, coffee in hand, a new Colab notebook, and the first thing staring back at you is a column of national IDs.",
+  m2: "The ticket: pseudonymize the working copy, then let one well-fed prompt build the whole scaffold. Another 15 minutes on the clock.",
+  t3: "Scaffold built, cleaning decisions recorded for the pipeline to come. The knowledge check deals six cards: what is actually safe to paste?",
+  t4: "Interpretation drafted and fact-checked. At the knowledge check, three polished statements about the same confusion matrix. One is a bluff, and you get to call it.",
+  t4c: "The bluff is called with the right evidence in hand. Time to bank Milestone 2 before production comes calling.",
+  r2: "By Thursday the exploration has answered the what: late deliveries and young accounts are where churn lives. But a notebook only you can run is not a deliverable. You close Colab, open VS Code, and pull the final ticket.",
+  m3: "The last required ticket hands the keyboard to an agent and keeps the judgment with you. Fifteen minutes: spec, plan, diffs, README.",
+  t6: "A few hundred times faster, and provably identical. One question remains: before the profile settled it, where did you think the 100 seconds went? Place the bet.",
+  t6c: "That was the last ticket on the board. Time to bank Milestone 3.",
+  r3: "Friday afternoon. The pipeline runs in under a second and the README survived a neighbour's read-aloud. Before emailing the Head of Growth, you run the sprint through your checklist.",
+  checklist: "Every box you can defend is checked. Walk into the finale.",
+  finale: "Your highlights have been compiling themselves since the first knowledge check. They are on the next page.",
+  report: "One last page: the stretch challenges that turn today's habits into next quarter's instincts.",
+};
 
 /* ---------------- shared blocks ---------------- */
 const Eyebrow = ({ children }) => (
@@ -600,36 +607,9 @@ function PromptBlock({ text, label }) {
   );
 }
 
-function MCQ({ idx, data, saved, onAnswer }) {
-  const picked = saved;
-  const letters = ["a", "b", "c", "d"];
-  const done = picked !== undefined && picked !== null;
-  return (
-    <div className="my-4">
-      <p className="font-semibold text-slate-800 mb-2">Q{idx + 1}. {data.q}</p>
-      <div className="space-y-2">
-        {data.opts.map((o, i) => {
-          let cls = "border-slate-200 hover:border-teal-600 bg-white";
-          if (done && i === data.a) cls = "border-teal-600 bg-teal-50";
-          else if (done && picked === i) cls = "border-red-300 bg-red-50";
-          else if (done) cls = "border-slate-200 bg-white opacity-60";
-          return (
-            <button key={i} disabled={done} onClick={() => onAnswer(i)}
-              className={`w-full text-left px-4 py-2.5 rounded-xl border text-sm transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-teal-700 ${cls}`}>
-              <span className="font-mono font-bold text-teal-800 mr-2">{letters[i]})</span>{o}
-              {done && i === data.a && <span className="ml-2 text-teal-700 font-semibold">correct</span>}
-            </button>
-          );
-        })}
-      </div>
-      {done && <p className="mt-2 text-sm text-slate-600 bg-slate-50 rounded-lg px-3 py-2">{data.ex}</p>}
-    </div>
-  );
-}
-
 const CheckShell = ({ name, checks, children }) => (
   <div className="rounded-2xl p-5 my-2" style={{ background: CORAL_SOFT }}>
-    <div className="font-mono text-xs tracking-widest uppercase mb-1" style={{ color: CORAL }}>Skill checkpoint</div>
+    <div className="font-mono text-xs tracking-widest uppercase mb-1" style={{ color: CORAL }}>Knowledge check</div>
     <h4 className="font-bold text-slate-800 text-lg mb-1">{name}</h4>
     <p className="text-sm text-slate-600 mb-4">{checks}</p>
     {children}
@@ -845,14 +825,7 @@ function BetBottleneck({ result, setResult }) {
 const CHECKPOINTS = { fix: FixTheBrief, spot: SpotViolation, paste: SafeToPaste, bluff: CallTheBluff, bet: BetBottleneck };
 
 /* ---------------- performance scoring ----------------
-   Chart series colors are validated (CVD deltaE 27, contrast >= 3:1 on white):
-   knowledge checks #0D9488, checkpoints #E8604C. Brand teal #0F766E stays on
-   UI chrome; it sits below the chroma floor for chart marks. */
-const KC_COLOR = "#0D9488";
-const CP_COLOR = "#E8604C";
-const SHORT = { t1: "Playbook Gem", t2: "Code Review Gem", t3: "Privacy-first EDA", t4: "Interpret the model", t5: "Agentic ETL build", t6: "Profile & optimize" };
-
-/* Normalize each checkpoint game's result shape to a 0..1 score.
+   Normalize each knowledge-check game's result shape to a 0..1 score.
    "Bet on the Bottleneck" is a designed lesson (most players lose on purpose),
    so it counts as participation, never as mastery. */
 const CP_SCORE = {
@@ -862,220 +835,59 @@ const CP_SCORE = {
   bluff: (r) => ({ pct: r ? 1 : 0, note: r ? "Called the bluff with the right evidence" : "Called the bluff, wrong evidence cell" }),
 };
 
-function buildReport(state) {
-  return Object.keys(TASKS).map((id) => {
-    const T = TASKS[id];
-    const answers = state.quiz[id] || [];
-    let right = 0, done = 0;
-    const missed = [];
-    T.mcqs.forEach((m, i) => {
-      const v = answers[i];
-      if (v != null) { done++; if (v === m.a) right++; else missed.push(i); }
-    });
-    const kc = { right, done, total: T.mcqs.length, missed, attempted: done > 0, pct: done > 0 ? right / T.mcqs.length : null };
-
-    const res = state.games[id];
-    let cp;
-    if (!T.game) cp = { na: true, note: "No checkpoint in this task" };
-    else if (res == null) cp = { attempted: false, note: "Not attempted" };
-    else if (T.game === "bet") cp = { attempted: true, lesson: true, note: res.won ? "Completed; bet paid off (unscored lesson)" : "Completed; the profile beat intuition (unscored lesson)" };
-    else cp = { attempted: true, ...CP_SCORE[T.game](res) };
-
-    const growth = [];
-    if (kc.attempted) {
-      missed.forEach((qi) => growth.push(`Q${qi + 1}: ${T.mcqs[qi].ex}`));
-      if (done < kc.total) growth.push(`${kc.total - done} knowledge-check question${kc.total - done === 1 ? "" : "s"} left unanswered`);
-    }
-    if (cp.pct != null && cp.pct < 0.75) growth.push(`Checkpoint: ${cp.note}. Worth a retry after revisiting the task.`);
-    const engaged = kc.attempted || cp.attempted;
-    const strength = engaged && growth.length === 0 && kc.attempted;
-    return { id, T, kc, cp, growth, engaged, strength };
-  });
-}
-
-const download = (name, text, type) => {
-  const blob = new Blob([text], { type });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url; a.download = name; a.click();
-  URL.revokeObjectURL(url);
+const SKILL_NAMES = {
+  t1: "Briefing an AI with testable instructions",
+  t2: "Enforcing code conventions on AI output",
+  t3: "Prompt-time data governance",
+  t4: "Verifying AI claims against the numbers",
+  t6: "Profiling before optimizing",
 };
 
 const pctLabel = (p) => `${Math.round(p * 100)}%`;
 
-function StatTile({ label, value, sub }) {
-  return (
-    <div className="hover-lift rounded-xl border border-teal-100 bg-white p-4 flex-1 min-w-[140px]">
-      <div className="text-xs text-slate-500">{label}</div>
-      <div className="text-3xl font-semibold text-slate-800 mt-1">{value}</div>
-      <div className="text-xs text-slate-500 mt-1">{sub}</div>
-    </div>
-  );
+/* Every attempted knowledge check, best first; the report shows the top three. */
+function topHighlights(state) {
+  return Object.keys(TASKS)
+    .filter((id) => TASKS[id].game && state.games[id] != null)
+    .map((id) => {
+      const T = TASKS[id];
+      const res = state.games[id];
+      if (T.game === "bet") return { id, name: SKILL_NAMES[id], pct: null, note: res.won ? "Your instinct matched the profile" : "You watched the profile beat intuition, which is the lesson" };
+      return { id, name: SKILL_NAMES[id], ...CP_SCORE[T.game](res) };
+    })
+    .sort((a, b) => (b.pct == null ? -1 : b.pct) - (a.pct == null ? -1 : a.pct));
 }
 
-/* Grouped horizontal bars: two series (knowledge check, checkpoint) per task. */
-function ScoreChart({ rows }) {
-  const x0 = 150, x1 = 570, W = 640;
-  const barH = 12, gap = 2, groupPad = 14, legendH = 26, axisH = 22;
-  const groupH = barH * 2 + gap + groupPad;
-  const H = legendH + rows.length * groupH + axisH;
-  const x = (p) => x0 + p * (x1 - x0);
-  const barPath = (bx, by, w) => {
-    const r = Math.min(4, w);
-    return `M${bx},${by} L${bx + w - r},${by} A${r},${r} 0 0 1 ${bx + w},${by + r} L${bx + w},${by + barH - r} A${r},${r} 0 0 1 ${bx + w - r},${by + barH} L${bx},${by + barH} Z`;
-  };
-  const Bar = ({ y, pct, color, note }) => {
-    if (pct == null) return <text x={x0 + 4} y={y + barH - 2} fontSize="10" fill="#94A3B8">{note}</text>;
-    const w = Math.max(pct * (x1 - x0), 2);
-    return (
-      <g>
-        <title>{note}</title>
-        <path d={barPath(x0, y, w)} fill={color} />
-        <text x={x0 + w + 6} y={y + barH - 2} fontSize="11" fill="#475569">{pctLabel(pct)}</text>
-      </g>
-    );
-  };
-  return (
-    <svg viewBox={`0 0 ${W} ${H}`} className="w-full" role="img" aria-label="Scores per task: knowledge checks and skill checkpoints">
-      {[[KC_COLOR, "Knowledge check", 0], [CP_COLOR, "Skill checkpoint", 130]].map(([c, l, dx]) => (
-        <g key={l} transform={`translate(${x0 + dx}, 4)`}>
-          <rect width="10" height="10" rx="2" fill={c} />
-          <text x="15" y="9" fontSize="11" fill="#475569">{l}</text>
-        </g>
-      ))}
-      {[0, 0.25, 0.5, 0.75, 1].map((t) => (
-        <g key={t}>
-          <line x1={x(t)} x2={x(t)} y1={legendH} y2={H - axisH + 4} stroke="#E2E8F0" strokeWidth="1" />
-          <text x={x(t)} y={H - 6} fontSize="10" fill="#94A3B8" textAnchor="middle">{t * 100}%</text>
-        </g>
-      ))}
-      {rows.map((r, i) => {
-        const gy = legendH + i * groupH + groupPad / 2;
-        const kcNote = r.kc.attempted ? `${r.kc.right} of ${r.kc.total} correct` : "Not attempted";
-        return (
-          <g key={r.id}>
-            <text x={x0 - 8} y={gy + barH + gap / 2 + 3} fontSize="11" fill="#334155" textAnchor="end">{r.T.num} · {SHORT[r.id]}{r.T.required ? "" : " *"}</text>
-            <Bar y={gy} pct={r.kc.pct} color={KC_COLOR} note={`Knowledge check — ${kcNote}`} />
-            <Bar y={gy + barH + gap} pct={r.cp.na || r.cp.lesson ? null : r.cp.attempted ? r.cp.pct : null} color={CP_COLOR} note={`Checkpoint — ${r.cp.note}`} />
-          </g>
-        );
-      })}
-    </svg>
-  );
-}
-
-function ReportPage({ state, pct }) {
-  const rows = buildReport(state);
-  const student = state.student || { name: "", email: "" };
-  const attempted = rows.filter((r) => r.kc.attempted);
-  const kcRight = attempted.reduce((n, r) => n + r.kc.right, 0);
-  const kcTotal = attempted.reduce((n, r) => n + r.kc.total, 0);
-  const scored = rows.filter((r) => r.cp.pct != null);
-  const cpAvg = scored.length ? scored.reduce((n, r) => n + r.cp.pct, 0) / scored.length : null;
-  const strengths = rows.filter((r) => r.strength);
-  const growths = rows.filter((r) => r.engaged && r.growth.length > 0);
-  const skipped = rows.filter((r) => !r.engaged);
-  const today = new Date().toISOString().slice(0, 10);
-
-  const exportData = () => ({
-    student, generatedAt: new Date().toISOString(),
-    overall: { knowledgeChecks: kcTotal ? `${kcRight}/${kcTotal}` : "not attempted", checkpointAverage: cpAvg != null ? pctLabel(cpAvg) : "not attempted", sprintCompletion: `${pct}%` },
-    tasks: rows.map((r) => ({
-      task: r.T.num, title: r.T.title, required: r.T.required,
-      knowledgeCheck: r.kc.attempted ? { correct: r.kc.right, total: r.kc.total, missedQuestions: r.kc.missed.map((i) => i + 1) } : "not attempted",
-      checkpoint: r.cp.note, areasOfGrowth: r.growth,
-    })),
-  });
-  const exportCsv = () => {
-    const esc = (s) => `"${String(s).replace(/"/g, '""')}"`;
-    const lines = [["Task", "Title", "KC correct", "KC total", "Checkpoint", "Areas of growth"].join(",")];
-    rows.forEach((r) => lines.push([r.T.num, esc(r.T.title), r.kc.attempted ? r.kc.right : "", r.kc.total, esc(r.cp.note), esc(r.growth.join(" | "))].join(",")));
-    return lines.join("\n");
-  };
-  const slug = (student.name || "student").trim().toLowerCase().replace(/\s+/g, "-");
-
+function ReportPage({ state }) {
+  const student = state.student || { name: "" };
+  const highlights = topHighlights(state).slice(0, 3);
+  const medals = ["🥇", "🥈", "🥉"];
   return (
     <div>
       <div className="flex items-center gap-3 mb-1">
         <PersonaBust size={48} />
         <div>
-          <Eyebrow>Sprint performance report | {today}</Eyebrow>
-          <h2 className="text-2xl font-bold text-slate-800 tracking-tight">{student.name || "Your"} performance report</h2>
-          {student.email && <div className="text-xs text-slate-500">{student.email}</div>}
+          <Eyebrow>Sprint highlights</Eyebrow>
+          <h2 className="text-2xl font-bold text-slate-800 tracking-tight">{student.name ? `${student.name}'s` : "Your"} top {highlights.length <= 1 ? "moment" : `${highlights.length} moments`}</h2>
         </div>
       </div>
-      <div className="flex gap-3 flex-wrap mt-4">
-        <StatTile label="Knowledge checks" value={kcTotal ? pctLabel(kcRight / kcTotal) : "—"} sub={kcTotal ? `${kcRight} of ${kcTotal} correct across ${attempted.length} task${attempted.length === 1 ? "" : "s"}` : "No checks attempted yet"} />
-        <StatTile label="Skill checkpoints" value={cpAvg != null ? pctLabel(cpAvg) : "—"} sub={scored.length ? `Average across ${scored.length} scored checkpoint${scored.length === 1 ? "" : "s"}` : "No scored checkpoints yet"} />
-        <StatTile label="Sprint completion" value={`${pct}%`} sub="Pages visited across the sprint" />
-      </div>
-
-      <h3 className="font-bold text-teal-800 mt-6 mb-1">Scores per task</h3>
-      <div className="rounded-xl border border-teal-100 bg-white p-4 overflow-x-auto">
-        <ScoreChart rows={rows} />
-        <p className="text-xs text-slate-500 mt-2">* optional further-practice task; skipping it is expected in the 45-minute sprint.</p>
-      </div>
-
-      <div className="grid sm:grid-cols-2 gap-4 mt-5">
-        <div className="rounded-xl border border-teal-100 bg-white p-4">
-          <h3 className="font-bold text-teal-800 mb-2">Strengths</h3>
-          {strengths.length === 0 && <p className="text-sm text-slate-500">Strengths appear here once a task's knowledge check is fully correct and its checkpoint is solid.</p>}
-          <ul className="space-y-2">
-            {strengths.map((r) => (
-              <li key={r.id} className="flex gap-2 text-sm text-slate-700">
-                <span aria-hidden className="w-5 h-5 rounded-full bg-teal-700 text-white text-xs font-bold flex items-center justify-center shrink-0">✓</span>
-                <span><b>Task {r.T.num}: {SHORT[r.id]}.</b> {r.T.concept}</span>
-              </li>
-            ))}
-          </ul>
+      {highlights.length === 0 ? (
+        <p className="text-sm text-slate-600 mt-4">Complete a knowledge check and your highlights will appear here.</p>
+      ) : (
+        <div className="space-y-3 mt-4">
+          {highlights.map((h, i) => (
+            <div key={h.id} className="hover-lift flex items-center gap-4 rounded-2xl border border-teal-100 bg-white p-5">
+              <span className="text-3xl" aria-hidden>{medals[i]}</span>
+              <div className="min-w-0 flex-1">
+                <div className="font-bold text-slate-800">{h.name}</div>
+                <div className="text-sm text-slate-600">{h.note}</div>
+              </div>
+              {h.pct != null && <div className="text-2xl font-bold text-teal-700 shrink-0" style={{ fontVariantNumeric: "tabular-nums" }}>{pctLabel(h.pct)}</div>}
+            </div>
+          ))}
         </div>
-        <div className="rounded-xl border bg-white p-4" style={{ borderColor: CORAL_SOFT }}>
-          <h3 className="font-bold mb-2" style={{ color: CORAL }}>Areas of growth</h3>
-          {growths.length === 0 && <p className="text-sm text-slate-500">Nothing flagged. Any missed question or shaky checkpoint would be listed here with what to revisit.</p>}
-          <ul className="space-y-3">
-            {growths.map((r) => (
-              <li key={r.id} className="text-sm text-slate-700">
-                <div className="flex gap-2">
-                  <span aria-hidden className="w-5 h-5 rounded-full text-white text-xs font-bold flex items-center justify-center shrink-0" style={{ background: CORAL }}>↗</span>
-                  <b>Task {r.T.num}: {SHORT[r.id]}</b>
-                </div>
-                <ul className="mt-1 ml-7 list-disc space-y-1 text-xs text-slate-600">
-                  {r.growth.map((g, i) => <li key={i}>{g}</li>)}
-                </ul>
-              </li>
-            ))}
-          </ul>
-          {skipped.some((r) => r.T.required) && <p className="text-xs font-semibold mt-3" style={{ color: CORAL }}>Required but not attempted: {skipped.filter((r) => r.T.required).map((r) => `Task ${r.T.num}`).join(", ")}.</p>}
-          {skipped.some((r) => !r.T.required) && <p className="text-xs text-slate-500 mt-2">Optional tasks not attempted (fine to skip): {skipped.filter((r) => !r.T.required).map((r) => `Task ${r.T.num}`).join(", ")}.</p>}
-        </div>
-      </div>
-
-      <h3 className="font-bold text-teal-800 mt-6 mb-2">All results</h3>
-      <div className="rounded-xl border border-teal-100 bg-white overflow-x-auto">
-        <table className="w-full text-sm">
-          <thead>
-            <tr className="text-left text-xs text-slate-500 border-b border-slate-100">
-              <th className="px-4 py-2 font-semibold">Task</th><th className="px-4 py-2 font-semibold">Knowledge check</th><th className="px-4 py-2 font-semibold">Skill checkpoint</th>
-            </tr>
-          </thead>
-          <tbody>
-            {rows.map((r) => (
-              <tr key={r.id} className="border-b border-slate-50 last:border-0">
-                <td className="px-4 py-2 text-slate-700">{r.T.num} · {SHORT[r.id]}{!r.T.required && <span className="ml-2 text-[10px] font-bold px-1.5 py-0.5 rounded-full border align-middle" style={{ borderColor: CORAL, color: CORAL }}>OPTIONAL</span>}</td>
-                <td className="px-4 py-2 text-slate-600" style={{ fontVariantNumeric: "tabular-nums" }}>{r.kc.attempted ? `${r.kc.right} / ${r.kc.total}` : "Not attempted"}</td>
-                <td className="px-4 py-2 text-slate-600">{r.cp.note}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-
-      <div className="flex gap-3 flex-wrap mt-6 no-print">
-        <button onClick={() => window.print()} className="px-5 py-2 rounded-xl bg-teal-700 hover:bg-teal-800 text-white font-semibold text-sm transition-colors">Print / save as PDF</button>
-        <button onClick={() => download(`sprint-report-${slug}.json`, JSON.stringify(exportData(), null, 2), "application/json")} className="px-5 py-2 rounded-xl border border-teal-300 bg-white text-teal-800 font-semibold text-sm hover:bg-teal-50 transition-colors">Download JSON</button>
-        <button onClick={() => download(`sprint-report-${slug}.csv`, exportCsv(), "text/csv")} className="px-5 py-2 rounded-xl border border-teal-300 bg-white text-teal-800 font-semibold text-sm hover:bg-teal-50 transition-colors">Download CSV</button>
-      </div>
-      <p className="text-xs text-slate-500 mt-3 no-print">Share the PDF or a downloaded file with your facilitator. Results live in this browser only; clearing site data resets them.</p>
+      )}
+      <p className="text-xs text-slate-500 mt-5">That is the whole report: what you did best today. Results live in this browser only.</p>
     </div>
   );
 }
@@ -1088,7 +900,7 @@ function TaskHeader({ T }) {
       <div className="min-w-0">
         <Eyebrow>{T.tool} | {T.time}</Eyebrow>
         <div className="flex items-center gap-3 flex-wrap">
-          <h2 className="text-2xl font-bold text-slate-800 tracking-tight">Task {T.num}: {T.title}</h2>
+          <h2 className="text-2xl font-bold text-slate-800 tracking-tight">{T.required ? `Task ${T.num}` : "Optional exercise"}: {T.title}</h2>
           <Badge required={T.required} />
         </div>
         <p className="text-sm mt-1 italic" style={{ color: CORAL }}>{T.concept}</p>
@@ -1107,9 +919,14 @@ function TaskPage({ id }) {
       <h3 className="font-bold text-teal-800 mt-5 mb-2">Steps to implement</h3>
       <ol className="space-y-2.5">
         {T.steps.map(([txt, why], i) => (
-          <li key={i} className="flex gap-3 text-sm">
-            <span className="font-mono font-bold text-teal-700 shrink-0">{i + 1}.</span>
-            <span className="text-slate-700 leading-relaxed">{fmt(txt)} <em className="text-teal-800">Why: {why}</em></span>
+          <li key={i} className="text-sm">
+            <div className="flex gap-3">
+              <span className="font-mono font-bold text-teal-700 shrink-0">{i + 1}.</span>
+              <div className="text-slate-700 leading-relaxed min-w-0">
+                {fmt(txt)} <em className="text-teal-800">Why: {why}</em>
+                {T.prompt && T.promptStep === i && <PromptBlock text={T.prompt} label={T.promptLabel} />}
+              </div>
+            </div>
           </li>
         ))}
       </ol>
@@ -1119,33 +936,6 @@ function TaskPage({ id }) {
           <div className="flex flex-wrap gap-2">{T.files.map(f => <FileChip key={f} name={f.split("/").pop()} path={f} />)}</div>
         </div>
       )}
-      {T.prompt && <PromptBlock text={T.prompt} label={T.promptLabel} />}
-      <p className="text-xs text-slate-500 mt-5">Next up: the knowledge check for this task.</p>
-    </div>
-  );
-}
-
-function KnowledgeCheckPage({ taskId, state, setState, celebrate, who }) {
-  const T = TASKS[taskId];
-  const answers = state.quiz[taskId] || [];
-  const setAnswer = (qi, v) => setState({ ...state, quiz: { ...state.quiz, [taskId]: Object.assign([], answers, { [qi]: v }) } });
-  const answered = T.mcqs.filter((_, i) => answers[i] != null).length;
-  const prevAnswered = useRef(answered);
-  useEffect(() => {
-    if (answered === T.mcqs.length && prevAnswered.current < T.mcqs.length) celebrate();
-    prevAnswered.current = answered;
-  }, [answered]);
-  return (
-    <div>
-      <div className="flex items-center gap-3">
-        <PersonaBust size={48} />
-        <div>
-          <Eyebrow>Task {T.num} | {T.title}</Eyebrow>
-          <h2 className="text-2xl font-bold text-slate-800 tracking-tight">Knowledge check</h2>
-        </div>
-      </div>
-      <p className="text-sm text-slate-600 mt-2">Two questions, {who}. Instant feedback; answer before moving on.</p>
-      {T.mcqs.map((q, qi) => <MCQ key={qi} idx={qi} data={q} saved={answers[qi]} onAnswer={(v) => setAnswer(qi, v)} />)}
     </div>
   );
 }
@@ -1164,11 +954,50 @@ function CheckpointPage({ taskId, state, setState, celebrate }) {
       <div className="flex items-center gap-3 mb-3">
         <PersonaBust size={48} />
         <div>
-          <Eyebrow>Task {T.num} | {T.title}</Eyebrow>
-          <h2 className="text-2xl font-bold text-slate-800 tracking-tight">Skill checkpoint: {T.gameName}</h2>
+          <Eyebrow>{T.required ? `Task ${T.num}` : "Optional exercise"} | {T.title}</Eyebrow>
+          <h2 className="text-2xl font-bold text-slate-800 tracking-tight">Knowledge check: {T.gameName}</h2>
         </div>
       </div>
+      <p className="text-sm text-slate-600 mb-3">No multiple choice here; prove the skill by playing it.</p>
       <Comp result={state.games[taskId]} setResult={setResult} />
+    </div>
+  );
+}
+
+/* ---------------- optional-exercise offer ----------------
+   Shown at the foot of a core task's last page once that task is finished.
+   The offer withdraws itself when the 15-minute ticket has under 3 minutes
+   left (or has expired): the sprint moves on, the exercise waits in
+   Further practice. */
+function OptionalOffer({ T, remaining, opted, onYes, onNo }) {
+  const timeOk = remaining == null || remaining >= OFFER_MIN_MS;
+  const yesBtn = "hover-pop px-5 py-2 rounded-xl text-white font-semibold text-sm transition-colors hover:opacity-90";
+  const noBtn = "hover-pop px-5 py-2 rounded-xl border border-teal-300 bg-white text-teal-800 font-semibold text-sm hover:bg-teal-50 transition-colors";
+  return (
+    <div className="mt-6 rounded-2xl border-2 bg-white p-5" style={{ borderColor: CORAL_SOFT }} data-testid="optional-offer">
+      <div className="font-mono text-xs tracking-widest uppercase mb-1" style={{ color: CORAL }}>Ticket closed</div>
+      {opted === true ? (
+        <>
+          <p className="text-sm text-slate-700 mb-3">The optional exercise is unlocked: <b>{T.title}</b> ({T.time}).</p>
+          <div className="flex gap-3 flex-wrap">
+            <button onClick={onYes} className={yesBtn} style={{ background: CORAL }}>Reopen the optional exercise</button>
+            <button onClick={onNo} className={noBtn}>Continue the lesson</button>
+          </div>
+        </>
+      ) : timeOk ? (
+        <>
+          <p className="text-sm text-slate-700 mb-3">There is still time on this ticket. Fancy the optional exercise, <b>{T.title}</b> ({T.time}), or continue with the lesson?</p>
+          <div className="flex gap-3 flex-wrap">
+            <button onClick={onYes} className={yesBtn} style={{ background: CORAL }}>Try the optional exercise</button>
+            <button onClick={onNo} className={noBtn}>Continue the lesson</button>
+          </div>
+        </>
+      ) : (
+        <>
+          <p className="text-sm text-slate-700 mb-3">Less than three minutes remain on this ticket, so the sprint moves on. <b>{T.title}</b> will wait for you on the Further practice page.</p>
+          <button onClick={onNo} className={noBtn}>Continue the lesson</button>
+        </>
+      )}
     </div>
   );
 }
@@ -1186,7 +1015,7 @@ function MilestoneIntro({ n, title, intro, prop, scene, tickets }) {
             <div className="flex items-center justify-between mb-1">
               <span className="font-mono text-xs text-teal-700">TICKET DL-{n}0{i + 1}</span>
               <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${i === 0 ? "bg-teal-700 text-white" : "border"}`}
-                style={i === 0 ? {} : { borderColor: CORAL, color: CORAL }}>{i === 0 ? "REQUIRED" : "OPTIONAL"}</span>
+                style={i === 0 ? {} : { borderColor: CORAL, color: CORAL }}>{i === 0 ? "REQUIRED" : "OPTIONAL, IF EARLY"}</span>
             </div>
             <div className="font-semibold text-slate-800 text-sm">{t}</div>
           </div>
@@ -1196,7 +1025,7 @@ function MilestoneIntro({ n, title, intro, prop, scene, tickets }) {
   );
 }
 
-function RecapPage({ title, points, transition }) {
+function RecapPage({ title, points }) {
   return (
     <div>
       <Eyebrow>Recap</Eyebrow>
@@ -1208,7 +1037,6 @@ function RecapPage({ title, points, transition }) {
           ))}
         </ul>
       </div>
-      {transition && <Story>{transition}</Story>}
     </div>
   );
 }
@@ -1216,10 +1044,12 @@ function RecapPage({ title, points, transition }) {
 /* ---------------- main ---------------- */
 export default function App() {
   const [page, setPage] = useState(0);
-  const [state, setState] = useState({ visited: { 0: true }, quiz: {}, games: {}, checks: {}, student: { name: "", email: "" } });
+  const [state, setState] = useState({ visited: { 0: true }, games: {}, checks: {}, optIn: {}, taskStart: {}, student: { name: "" } });
   const [loaded, setLoaded] = useState(false);
   const [navOpen, setNavOpen] = useState(false);
+  const [navCollapsed, setNavCollapsed] = useState(false);
   const [burst, setBurst] = useState(0);
+  const [now, setNow] = useState(Date.now());
   const mainRef = useRef(null);
   const celebrate = () => setBurst(Date.now());
   useEffect(() => {
@@ -1228,15 +1058,32 @@ export default function App() {
     return () => clearTimeout(t);
   }, [burst]);
   useEffect(() => { if (loaded && PAGES[page].id === "finale") celebrate(); }, [page, loaded]);
+  useEffect(() => {
+    const t = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(t);
+  }, []);
 
   useEffect(() => {
     (async () => {
-      const saved = await store.get("sprint-progress");
-      if (saved) { setState(s => ({ ...s, ...saved.state })); setPage(saved.page || 0); }
+      const saved = await store.get("sprint-progress-v2");
+      if (saved) { setState(s => ({ ...s, ...saved.state })); setPage(Math.min(saved.page || 0, PAGES.length - 1)); }
       setLoaded(true);
     })();
   }, []);
-  useEffect(() => { if (loaded) store.set("sprint-progress", { page, state }); }, [page, state, loaded]);
+  useEffect(() => { if (loaded) store.set("sprint-progress-v2", { page, state }); }, [page, state, loaded]);
+
+  /* The 15-minute ticket clock starts the first time its core task page opens. */
+  useEffect(() => {
+    const p = PAGES[page];
+    if (loaded && p.type === "task" && !p.hidden && p.timer && !(state.taskStart || {})[p.timer]) {
+      setState(s => ({ ...s, taskStart: { ...s.taskStart, [p.timer]: Date.now() } }));
+    }
+  }, [page, loaded]);
+
+  const remainingFor = (tid) => {
+    const start = (state.taskStart || {})[tid];
+    return start ? TASK_MS - (now - start) : null;
+  };
 
   const go = (i) => {
     const n = Math.max(0, Math.min(PAGES.length - 1, i));
@@ -1247,12 +1094,29 @@ export default function App() {
     window.scrollTo(0, 0);
   };
 
-  const doneCount = Object.keys(state.visited).length;
-  const pct = Math.round((doneCount / PAGES.length) * 100);
-  const quizScore = Object.entries(state.quiz).reduce((acc, [id, arr]) => {
-    (arr || []).forEach((v, i) => { if (v != null && TASKS[id]) { acc.total++; if (v === TASKS[id].mcqs[i].a) acc.right++; } });
-    return acc;
-  }, { right: 0, total: 0 });
+  /* Hidden (optional) pages are enterable only after opting in via the offer. */
+  const canEnter = (p) => !p.hidden || (state.optIn || {})[p.g] === true;
+  const step = (dir) => {
+    let i = page + dir;
+    while (i >= 0 && i < PAGES.length && !canEnter(PAGES[i])) i += dir;
+    if (i >= 0 && i < PAGES.length) go(i);
+  };
+  const acceptOptional = (optId) => {
+    setState(s => ({ ...s, optIn: { ...s.optIn, [OPT_GROUP[optId]]: true } }));
+    go(PAGES.findIndex(p => p.id === optId));
+  };
+  const declineOptional = (optId) => {
+    setState(s => ({ ...s, optIn: { ...s.optIn, [OPT_GROUP[optId]]: (s.optIn || {})[OPT_GROUP[optId]] === true } }));
+    const after = PAGES.findIndex(p => p.id === optId);
+    let i = after;
+    while (i < PAGES.length && PAGES[i].hidden) i++;
+    go(i);
+  };
+
+  const visiblePages = PAGES.filter(p => !p.hidden);
+  const doneCount = visiblePages.filter((p) => state.visited[PAGES.indexOf(p)]).length;
+  const pct = Math.round((doneCount / visiblePages.length) * 100);
+  const gamesDone = Object.values(state.games || {}).filter(v => v != null).length;
   const setChecks = (i) => setState({ ...state, checks: { ...state.checks, [i]: !state.checks[i] } });
   const who = ((state.student || {}).name || "").trim() || "Data Scientist";
 
@@ -1269,11 +1133,11 @@ export default function App() {
               <p className="text-xl font-semibold text-teal-700 mt-1">From Brief to Production: a hands-on sprint</p>
             </div>
           </div>
-          <Story>Monday morning. The Head of Growth stops at your desk: retailer churn is up 18 percent quarter on quarter and nobody knows why. You have the next sprint to work on this project — 45 minutes, five deliverables. And it is the one you have been waiting for: real stakes, real data, and every part of it matching something one of three AI tools claims to do.</Story>
-          <p className="text-slate-700 text-sm leading-relaxed">You are the data scientist at DukaLink, a Nairobi e-commerce marketplace, proving three tools on live work: <b>Gemini Gems</b> to set the standards, <b>Gemini on Colab</b> to explore safely, and <b>Claude Code</b> (or any agentic CLI) to productionize. Each tool has one required task and one optional further-practice task. Every task is followed by a knowledge check on its own page, and most by a skill checkpoint.</p>
+          <Story>Monday morning. The Head of Growth stops at your desk: retailer churn is up 18 percent quarter on quarter and nobody knows why. You have a 45-minute sprint: three required tasks, 15 minutes each, one per milestone. The story you are stepping into compresses a week at DukaLink into those 45 minutes, and it is the project you have been waiting for: real stakes, real data, and every part of it matching something one of three AI tools claims to do.</Story>
+          <p className="text-slate-700 text-sm leading-relaxed">You are the data scientist at DukaLink, a Nairobi e-commerce marketplace, proving three tools on live work: <b>Gemini Gems</b> to set the standards, <b>Gemini on Colab</b> to explore safely, and <b>Claude Code</b> (or any agentic CLI) to productionize. Each tool gets one required 15-minute task, with a ticket clock at the top right keeping you honest. Finish a task with time to spare and you will be offered an optional extra exercise; decline, or run out of clock, and the lesson simply moves on. Most tasks end with an interactive knowledge check, a small game instead of a quiz.</p>
           <div className="mt-6 rounded-2xl border border-teal-100 bg-white p-5 max-w-md">
             <div className="font-bold text-slate-800 text-sm">Who is running this sprint?</div>
-            <p className="text-xs text-slate-500 mt-1 mb-3">Your knowledge-check and checkpoint results are tracked on this device and compiled into a performance report you can share once the sprint is complete.</p>
+            <p className="text-xs text-slate-500 mt-1 mb-3">Your knowledge-check results are tracked on this device only and distilled into your top three highlights at the end of the sprint.</p>
             <input value={(state.student || {}).name || ""} onChange={(e) => setState({ ...state, student: { ...state.student, name: e.target.value } })}
               placeholder="Your name" aria-label="Your name"
               className="w-full mb-3 px-3 py-2 rounded-xl border border-slate-300 text-sm focus:outline-none focus:border-teal-600" />
@@ -1297,7 +1161,7 @@ export default function App() {
               <span className="font-bold text-slate-800 sm:w-64 shrink-0">{a}.</span><span className="text-slate-600">{b}</span>
             </div>
           ))}
-          <p className="text-xs text-slate-500 mt-4">The three required tasks are the 45-minute sprint. The optional further-practice tasks are for fast finishers and for after the session, and the stretch challenges live at the end as after-workshop learning.</p>
+          <p className="text-xs text-slate-500 mt-4">The three required tasks are the 45-minute sprint: 15 minutes each, one per milestone, with a visible clock. Optional extra exercises are offered along the way to fast finishers, and the stretch challenges live at the end as after-workshop learning.</p>
         </div>
       );
       case "setup": return (
@@ -1331,47 +1195,46 @@ export default function App() {
                 <div className="text-xs text-slate-500">Months of reading about AI workflows. Zero of it proven on real work. Until Monday.</div>
               </div>
             </div>
-            <p className="text-sm text-slate-700 leading-relaxed">Your brief: a cleaned, documented customer dataset; an EDA summary of what distinguishes churned retailers; a baseline churn model with an interpretation; a fast production ETL pipeline with a README; and reusable team AI assets.</p>
-            <Story>You sketch three milestones on your board: set the standards, explore safely, productionize. Each gets a required ticket and an optional one if you finish early. If the tools are worth adopting, they will earn it here. Standards first, then speed.</Story>
+            <p className="text-sm text-slate-700 leading-relaxed">Your required brief, one deliverable per 15-minute ticket: a Cleaning Playbook Gem the whole team can reuse (Task 1), a privacy-safe EDA that records its cleaning decisions (Task 2), and a production ETL pipeline with a README (Task 3). Close a ticket with time to spare and an optional extra exercise is offered on the spot: a Code Review Gem, a verified model interpretation, or a measured optimization. The extras are exactly that, extras; nobody is behind for never seeing them.</p>
+            <Story>You sketch three milestones on your board: set the standards, explore safely, productionize. Each holds one required ticket, and a bonus one that only appears if you beat the clock. If the tools are worth adopting, they will earn it here. Standards first, then speed.</Story>
           </div>
         );
       }
       case "milestone": {
         if (pg.id === "m1") return <MilestoneIntro n={1} title="Set the Standards (Gemini Gems)" prop={<GemProp />}
           scene={`Monday, ${who}. You resist the urge to open the CSV and pick up a marker instead: the team's tribal knowledge is about to become written, testable standards.`}
-          intro="Before a single row is read, this milestone turns your team's habits into instructions an AI can follow. The required ticket builds the Cleaning Playbook Gem; the optional one adds a Code Review Gem that will audit everything the sprint produces later."
+          intro="Before a single row is read, this milestone turns your team's habits into instructions an AI can follow. The required ticket builds the Cleaning Playbook Gem; close it inside the 15 minutes and you will be offered a bonus, a Code Review Gem that audits everything the sprint produces later."
           tickets={["Write the Cleaning Playbook Gem and try to break it", "Build the Code Review Gem and feed it a horror"]} />;
         if (pg.id === "m2") return <MilestoneIntro n={2} title="Explore Safely (Gemini on Colab)" prop={<LaptopProp />}
           scene={`Tuesday, ${who}. Standards in hand, you open the data, and the first column staring back at you is a national ID. Exploration starts with governance.`}
-          intro="This milestone takes the standards into the data. The required ticket pseudonymizes the working copy and scaffolds the whole EDA from one workplace-grade prompt; the optional one interprets the provided churn model and fact-checks the AI's narration."
+          intro="This milestone takes the standards into the data. The required ticket pseudonymizes the working copy and scaffolds the whole EDA from one workplace-grade prompt; beat the clock and the offered bonus interprets the provided churn model and fact-checks the AI's narration."
           tickets={["Pseudonymize, then scaffold the EDA in one prompt", "Run the provided model; interpret and verify"]} />;
         return <MilestoneIntro n={3} title="Productionize (Claude Code / agentic CLI)" prop={<TerminalProp />}
           scene={`Thursday, ${who}. The notebook knows the answers; now the work has to run without you. You close Colab and open a terminal.`}
-          intro="The final milestone moves from exploration to a pipeline anyone can run. The required ticket supervises an agent through spec, plan, diffs, and a drift-checking README; the optional one profiles the 100-second pipeline and proves a rewrite that is a few hundred times faster."
+          intro="The final milestone moves from exploration to a pipeline anyone can run. The required ticket supervises an agent through spec, plan, diffs, and a drift-checking README; finish early and the offered bonus profiles the 100-second pipeline and proves a rewrite that is a few hundred times faster."
           tickets={["Spec, plan, supervise the ETL build; README with drift check", "Profile the slow pipeline, then optimize with proof"]} />;
       }
       case "task": return <TaskPage id={pg.id} />;
-      case "report": return <ReportPage state={state} pct={pct} />;
-      case "kcheck": return <KnowledgeCheckPage taskId={pg.task} state={state} setState={setState} celebrate={celebrate} who={who} />;
+      case "report": return <ReportPage state={state} />;
       case "checkpoint": return <CheckpointPage taskId={pg.task} state={state} setState={setState} celebrate={celebrate} />;
       case "recap": {
         if (pg.id === "r1") return <RecapPage title="Milestone 1: what you learned" points={[
           "AI is briefed like a new hire: role, testable constraints, output format, and permission to say 'not covered.'",
-          "You own two reusable assets: a Playbook that escalates what it should not decide, and a Reviewer that enforces your conventions.",
+          "You own a reusable Playbook Gem that escalates what it should not decide (and a conventions-enforcing Reviewer too, if you took the bonus).",
           "Standards were set before the data was opened, so everything downstream inherits them.",
-        ]} transition="With both Gems saved, you finally open the data. Tuesday morning, coffee in hand, a new Colab notebook, and the first thing staring back at you is a column of national IDs." />;
+        ]} />;
         if (pg.id === "r2") return <RecapPage title="Milestone 2: what you learned" points={[
           "Pseudonymize before you prompt: structure and aggregates in, PII never, and hashed columns are still personal data.",
           "One contexted prompt beats ten lazy ones, and a traceback is prompt material too.",
-          "AI writes the first draft of an interpretation; you check it against the numbers before anyone else hears it.",
+          "AI drafts, you verify: whether it narrates a model (the bonus exercise) or writes your code, the numbers get the final word.",
           "The recorded cleaning decisions are the handover to production.",
-        ]} transition={`By Thursday the exploration has answered the what: late deliveries and young accounts are where churn lives. But a notebook only you can run is not a deliverable, ${who}. You close Colab, open VS Code, and pull the last two tickets.`} />;
+        ]} />;
         return <RecapPage title="Milestone 3: what you learned" points={[
           "You supervised an agent: plan reviewed, every diff read, final script run by you.",
-          "Profile first, verify output equivalence, then trust the speedup.",
           "A README generated from real code caught the playbook drift a manual writeup would have missed.",
-          "The Gems from Milestone 1 audited the code from Milestone 3: not three tools, one workflow.",
-        ]} transition="Friday afternoon. The pipeline runs in under a second, the README survived a neighbour's read-aloud, and both Gems belong to the whole team. Before emailing the Head of Growth, you run the whole sprint through your checklist." />;
+          "If you took the bonus: profile first, verify output equivalence, then trust the speedup.",
+          "The Gem from Milestone 1 governed the code from Milestone 3: not three tools, one workflow.",
+        ]} />;
       }
       case "checklist": {
         const done = Object.values(state.checks).filter(Boolean).length;
@@ -1384,6 +1247,7 @@ export default function App() {
                 <h2 className="text-2xl font-bold text-slate-800 tracking-tight">{who}'s quality checklist</h2>
               </div>
             </div>
+            <p className="text-xs text-slate-500 mt-1">Items covering the Code Review Gem, the model interpretation, or the optimization apply only if you took those optional tickets; skip them guilt-free otherwise.</p>
             <div className="space-y-2 mt-3">
               {CHECKLIST.map((c, i) => (
                 <button key={i} onClick={() => setChecks(i)} className={`w-full flex items-start gap-3 text-left text-sm px-4 py-3 rounded-xl border transition-colors ${state.checks[i] ? "border-teal-600 bg-teal-50" : "border-slate-200 bg-white hover:border-teal-400"}`}>
@@ -1410,9 +1274,9 @@ export default function App() {
               <span key={i} className="px-3 py-1 rounded-full text-xs font-semibold text-white" style={{ background: i % 2 ? CORAL : "#0F766E" }}>{t}</span>
             ))}
           </div>
-          <p className="text-sm text-slate-700 leading-relaxed">The Playbook Gem wrote the ETL spec, the EDA notes fed the cleaning decisions, and the Code Review Gem audited the agent's output. Knowledge checks: <b>{quizScore.right} of {quizScore.total || 12}</b> answered correctly.</p>
+          <p className="text-sm text-slate-700 leading-relaxed">The Playbook Gem wrote the ETL spec, the EDA notes fed the cleaning decisions, and every deliverable obeys the standards you set before the data was opened. Knowledge checks played: <b>{gamesDone}</b>.</p>
           <Story>{state.student && state.student.name.trim() ? `Monday, ${state.student.name.trim()} was` : "Monday, you were"} a data scientist who had read about AI integration. Friday, you are one who has shipped with it. The sprint did not test whether you could use AI. It tested whether you could supervise it, and that turned out to be the actual skill.</Story>
-          <button onClick={() => go(page + 1)} className="mt-2 px-6 py-3 rounded-xl text-white font-bold transition-colors hover:opacity-90" style={{ background: CORAL }}>See your performance report</button>
+          <button onClick={() => step(1)} className="mt-2 px-6 py-3 rounded-xl text-white font-bold transition-colors hover:opacity-90" style={{ background: CORAL }}>See your highlights</button>
         </div>
       );
       case "further": return (
@@ -1425,10 +1289,28 @@ export default function App() {
             </div>
           </div>
           <p className="text-sm text-slate-600 mb-4">These stretch challenges are for after the session, once the sprint is done. Come back to them with the workshop files: they travel well, and each one deepens exactly one habit you built today.</p>
+          <div className="mb-5">
+            <div className="font-mono text-xs tracking-widest uppercase text-teal-700 mb-2">The optional exercises, any time you want them</div>
+            <div className="space-y-2">
+              {Object.keys(OPT_GROUP).map((id) => {
+                const T = TASKS[id];
+                const done = state.games[id] != null;
+                return (
+                  <div key={id} className="flex items-center gap-3 rounded-xl border border-teal-100 bg-white p-3 flex-wrap">
+                    <div className="min-w-0 flex-1">
+                      <div className="font-semibold text-slate-800 text-sm">{T.title} <span className="text-xs text-slate-500">({T.time})</span></div>
+                      <div className="text-xs text-slate-500">{done ? "Knowledge check completed" : "Never expires; the sprint clock does not apply here"}</div>
+                    </div>
+                    <button onClick={() => acceptOptional(id)} className="px-4 py-1.5 rounded-xl border border-teal-300 bg-white text-teal-800 font-semibold text-xs hover:bg-teal-50 transition-colors">{done ? "Revisit" : "Open"}</button>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
           <div className="space-y-3">
-            {Object.values(TASKS).map(T => (
-              <div key={T.num} className="rounded-xl border border-dashed border-teal-300 bg-white p-4">
-                <div className="font-mono text-xs text-teal-700 mb-1">FROM TASK {T.num}: {T.title.toUpperCase()}</div>
+            {Object.entries(TASKS).map(([id, T]) => (
+              <div key={id} className="rounded-xl border border-dashed border-teal-300 bg-white p-4">
+                <div className="font-mono text-xs text-teal-700 mb-1">FROM {T.required ? `TASK ${T.num}` : "THE OPTIONAL EXERCISE"}: {T.title.toUpperCase()}</div>
                 <p className="text-sm text-slate-700 leading-relaxed">{T.stretch}</p>
               </div>
             ))}
@@ -1445,25 +1327,42 @@ export default function App() {
     <div className="min-h-screen bg-slate-50 text-slate-800" style={{ fontFamily: "ui-sans-serif, system-ui, sans-serif" }}>
       <header className="no-print sticky top-0 z-20 bg-white border-b border-slate-200">
         <div className="flex items-center gap-3 px-4 py-2.5">
-          <button onClick={() => setNavOpen(!navOpen)} className="md:hidden px-2 py-1 rounded-lg border border-slate-300 text-sm font-semibold">Board</button>
+          <button onClick={() => { setNavOpen(o => !o); setNavCollapsed(c => !c); }} aria-label="Toggle the board sidebar"
+            className="px-2 py-1 rounded-lg border border-slate-300 text-sm font-semibold hover:border-teal-600 transition-colors">☰ Board</button>
           <div className="font-bold tracking-tight">Data Science AI Integration</div>
           <div className="font-mono text-xs text-slate-400 hidden sm:block">DukaLink sprint</div>
           <a href={RES("workshop_files.zip")} download className="hidden sm:inline text-xs font-semibold text-teal-700 hover:underline">Workshop files</a>
-          <div className="ml-auto flex items-center gap-2 w-40 sm:w-56">
-            <div className="flex-1 h-2 rounded-full bg-slate-100 overflow-hidden"><div className="h-2 bg-teal-700 transition-all" style={{ width: `${pct}%` }} /></div>
-            <span className="font-mono text-xs text-slate-500">{pct}%</span>
+          <div className="ml-auto flex items-center gap-2">
+            {(() => {
+              const tid = PAGES[page].timer;
+              const rem = tid ? remainingFor(tid) : null;
+              if (rem == null) return null;
+              const expired = rem <= 0;
+              const mm = Math.floor(Math.max(0, rem) / 60000), ss = Math.floor((Math.max(0, rem) % 60000) / 1000);
+              return (
+                <span data-testid="ticket-clock" title="Time budgeted for this ticket"
+                  className={`font-mono text-xs font-bold px-2.5 py-1 rounded-full border ${expired ? "bg-red-50 text-red-500 border-red-200" : rem < OFFER_MIN_MS ? "text-white border-transparent" : "bg-white border-teal-200 text-teal-800"}`}
+                  style={expired ? {} : rem < OFFER_MIN_MS ? { background: CORAL } : {}}>
+                  {expired ? "time up" : `${mm}:${String(ss).padStart(2, "0")}`}
+                </span>
+              );
+            })()}
+            <div className="flex items-center gap-2 w-28 sm:w-44">
+              <div className="flex-1 h-2 rounded-full bg-slate-100 overflow-hidden"><div className="h-2 bg-teal-700 transition-all" style={{ width: `${pct}%` }} /></div>
+              <span className="font-mono text-xs text-slate-500">{pct}%</span>
+            </div>
           </div>
         </div>
       </header>
 
       <div className="flex max-w-6xl mx-auto">
-        <nav className={`${navOpen ? "block" : "hidden"} no-print md:block w-64 shrink-0 border-r border-slate-200 bg-white md:bg-transparent absolute md:static z-10 md:z-auto h-full md:h-auto overflow-y-auto`}>
+        <nav className={`${navOpen ? "block" : "hidden"} ${navCollapsed ? "md:hidden" : "md:block"} no-print w-64 shrink-0 border-r border-slate-200 bg-white md:bg-transparent absolute md:static z-10 md:z-auto h-full md:h-auto overflow-y-auto`}>
           <div className="p-4 space-y-4">
             {MILESTONES.map((m, mi) => (
               <div key={mi}>
                 <div className="font-mono text-[10px] tracking-widest uppercase text-slate-400 mb-1.5">{m}</div>
                 <div className="space-y-1">
-                  {PAGES.map((p, i) => p.m === mi && (
+                  {PAGES.map((p, i) => p.m === mi && !p.hidden && (
                     <button key={p.id} onClick={() => go(i)}
                       className={`w-full flex items-center gap-2 text-left text-xs py-1.5 rounded-lg border-l-4 transition-all duration-150 hover:translate-x-0.5 ${p.sub ? "pl-6 pr-2" : "px-2.5"} ${i === page ? "bg-white shadow-sm font-semibold" : "border-transparent hover:bg-white hover:shadow-sm"}`}
                       style={i === page ? { borderLeftColor: CORAL } : {}}>
@@ -1479,11 +1378,31 @@ export default function App() {
 
         <main ref={mainRef} className="flex-1 min-w-0 p-4 sm:p-8">
           {burst > 0 && <Confetti key={burst} />}
-          <div key={page} className="page-enter"><Card className="min-h-[60vh]">{content()}</Card></div>
+          <div key={page} className="page-enter">
+            <Card className="min-h-[60vh]">
+              {content()}
+              {(() => {
+                const pg = PAGES[page];
+                const offerId = pg.offer;
+                if (!offerId) return null;
+                const finished = pg.type === "task" || state.games[pg.task] != null;
+                if (!finished) return null;
+                return <OptionalOffer T={TASKS[offerId]} remaining={remainingFor(pg.timer)}
+                  opted={(state.optIn || {})[OPT_GROUP[offerId]]}
+                  onYes={() => acceptOptional(offerId)} onNo={() => declineOptional(offerId)} />;
+              })()}
+              {TRANSITIONS[PAGES[page].id] && (
+                <div className="mt-8 pt-4 border-t border-teal-100 flex gap-2 text-sm italic text-slate-600">
+                  <span aria-hidden className="font-bold not-italic shrink-0" style={{ color: CORAL }}>→</span>
+                  <span>{TRANSITIONS[PAGES[page].id]}</span>
+                </div>
+              )}
+            </Card>
+          </div>
           <div className="no-print flex justify-between mt-4">
-            <button onClick={() => go(page - 1)} disabled={page === 0}
+            <button onClick={() => step(-1)} disabled={page === 0}
               className="hover-pop px-4 py-2 rounded-xl border border-slate-300 bg-white text-sm font-semibold disabled:opacity-30 hover:border-teal-600 transition-colors">← Back</button>
-            <button onClick={() => go(page + 1)} disabled={page === PAGES.length - 1}
+            <button onClick={() => step(1)} disabled={page === PAGES.length - 1}
               className="hover-pop px-4 py-2 rounded-xl text-white text-sm font-semibold disabled:opacity-30 bg-teal-700 hover:bg-teal-800 transition-colors">Next →</button>
           </div>
         </main>

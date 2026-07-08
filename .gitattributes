@@ -1,0 +1,3 @@
+*.pdf -text
+*.zip -text
+*.ipynb text eol=lf
